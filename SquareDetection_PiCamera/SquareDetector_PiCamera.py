@@ -1,5 +1,6 @@
 from picamera.array import PiRGBArray
 from picamera import PiCamera
+import time
 import cv2
 import numpy
 import sys
@@ -10,19 +11,22 @@ class SquareDetector:
         pass
 
     def startcapture(self):
-        cap = cv2.VideoCapture(0)
-        while cap.isOpened():
+        camera = PiCamera()
+        camera.resolution = (640, 480)
+        camera.framerate = 32
+        rawCapture = PiRGBArray(camera, size=(640, 480))
+        time.sleep(0.1)
+        for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
             key = cv2.waitKey(1)
             if key == ord("q"):
                 sys.exit()
-            ret, image = cap.read()
-            if not ret:
-                break
+            image = frame.array
             greyed = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             blurred = cv2.GaussianBlur(greyed, (5, 5), 0)
             edged = cv2.Canny(blurred, 150, 255)
             new_image, contours, hierarchy = cv2.findContours(edged.copy(), cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
             self.verifycontours(image, contours)
+            rawCapture.truncate(0)
 
     def verifycontours(self, image, contours):
         centers = []
