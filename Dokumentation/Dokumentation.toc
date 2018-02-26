@@ -1,4 +1,4 @@
-\select@language {ngerman}
+\babel@toc {ngerman}{}
 \contentsline {section}{Inhaltsverzeichnis}{1}{section*.1}
 \contentsline {section}{Management Summary}{2}{section*.2}
 \contentsline {section}{\numberline {1}Einleitung}{3}{section.1}
