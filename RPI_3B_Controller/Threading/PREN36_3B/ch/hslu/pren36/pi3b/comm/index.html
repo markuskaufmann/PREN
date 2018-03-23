@@ -1,0 +1,40 @@
+<html>
+  <head>
+    <title>Python Web w/ Flask</title>
+    <link rel="stylesheet" type="text/css" href="../../static/style/index.css" />
+    <script src="../../static/script/jquery-3.2.1.min.js"></script>
+    <script src="../../static/script/proc.js"></script>
+  </head>
+  <body>
+    <div id="superContainer">
+      <div id="launchContainer">
+        <button id="btnStart" class="inlineBtn">START</button>
+        <button id="btnStop" class="inlineBtn">STOP</button>
+      </div>
+      <div id="stateContainer">
+        <label id="state"></label>
+      </div>
+      <div id="displayContainer">
+        <div id="canvasContainer" class="flex">
+          <canvas id="cvsPos" width="740px" height="380px"></canvas>
+        </div>
+        <div id="positionContainer" class="flex">
+          <div id="posSubContainer">
+            <table>
+              <tr>
+                <td class="tdlbl">x: </td>
+                <td id="posX" class="tdposition">-</td>
+                <td class="tdunit">cm</td>
+              </tr>
+              <tr>
+                <td class="tdlbl">z: </td>
+                <td id="posZ" class="tdposition">-</td>
+                <td class="tdunit">cm</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
