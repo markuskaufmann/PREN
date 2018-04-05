@@ -23,7 +23,7 @@ class ControllerStepmotor:
         while self.running:
             time.sleep(1)
             self.sm.set_state(StepMotor.state['acc'])
-            time.sleep(5)
+            time.sleep(10)
             self.sm.set_state(StepMotor.state['stop'])
             self.running = False
 
