@@ -25,4 +25,4 @@ class SerialConnection:
 
     def read(self):
         data = self.ser.readline().rstrip()
-        print("read " + str(data.decode('utf-8')))
+        return str(data.decode('utf-8'))

@@ -13,13 +13,16 @@ class Controller:
     proc_comm = None
     proc_improc = None
     proc_io = None
-    conn_comm_parent, conn_comm_child = Pipe()
-    conn_improc_parent, conn_improc_child = Pipe()
-    conn_io_parent, conn_io_child = Pipe()
+    conn_comm_parent, conn_comm_child = Pipe(duplex=True)
+    conn_improc_parent, conn_improc_child = Pipe(duplex=True)
+    conn_io_parent, conn_io_child = Pipe(duplex=True)
     thread_prefix = "Controller_"
     t_comm = None
+    t_comm_running = True
     t_improc = None
+    t_improc_running = True
     t_io = None
+    t_io_running = True
     imageprocessor = ImageProcessor()
     iolistener = IOListener()
 
@@ -45,40 +48,49 @@ class Controller:
             connection.send(event)
 
     def comm_wait(self):
-        communicatorevent = self.conn_comm_parent.recv()
-        controller_event_args = None
-        if communicatorevent.args == CommunicatorEvent.event_args_start:
-            controller_event_args = ControllerEvent.event_args_main_start
-        elif communicatorevent.args == CommunicatorEvent.event_args_stop:
-            controller_event_args = ControllerEvent.event_args_main_stop
-        event = ControllerEvent(controller_event_args)
-        self.notify_observers([self.conn_comm_parent, self.conn_improc_parent, self.conn_io_parent], event)
+        while self.t_comm_running:
+            communicatorevent = self.conn_comm_parent.recv()
+            controller_event_args = None
+            connections = [self.conn_io_parent]
+            if communicatorevent.args == CommunicatorEvent.event_args_start:
+                controller_event_args = ControllerEvent.event_args_main_start
+            elif communicatorevent.args == CommunicatorEvent.event_args_stop:
+                controller_event_args = ControllerEvent.event_args_main_stop
+                connections.append(self.conn_improc_parent)
+            event = ControllerEvent(controller_event_args)
+            self.notify_observers(connections, event)
 
     def improc_wait(self):
-        imageprocessorevent = self.conn_improc_parent.recv()
-        if imageprocessorevent.args == ImageProcessorEvent.event_args_found:
-            event = ControllerEvent(ControllerEvent.event_args_improc_target_found)
-            self.notify_observers([self.conn_comm_parent, self.conn_io_parent], event)
+        while self.t_improc_running:
+            imageprocessorevent = self.conn_improc_parent.recv()
+            if imageprocessorevent.args == ImageProcessorEvent.event_args_found:
+                event = ControllerEvent(ControllerEvent.event_args_improc_target_found)
+                self.notify_observers([self.conn_comm_parent, self.conn_io_parent], event)
 
     def io_wait(self):
-        iolistenerevent = self.conn_io_parent.recv()
-        data = iolistenerevent.args
-        controller_event_kwargs = None
-        connections = []
-        if data == IOListener.input_improc:
-            controller_event_args = ControllerEvent.event_args_main_start
-            connections.append(self.conn_improc_parent)
-            connections.append(self.conn_comm_parent)
-        elif data == IOListener.input_finish:
-            controller_event_args = ControllerEvent.event_args_main_stop
-            connections.append(self.conn_improc_parent)
-            connections.append(self.conn_comm_parent)
-        else:
-            controller_event_args = ControllerEvent.event_args_loc_state
-            controller_event_kwargs = data
-            connections.append(self.conn_comm_parent)
-        event = ControllerEvent(controller_event_args, controller_event_kwargs)
-        self.notify_observers(connections, event)
+        while self.t_io_running:
+            iolistenerevent = self.conn_io_parent.recv()
+            data = iolistenerevent.args
+            controller_event_kwargs = None
+            connections = []
+            if data == IOListener.output_start:
+                controller_event_args = ControllerEvent.event_args_main_start
+                connections.append(self.conn_comm_parent)
+            elif data == IOListener.input_improc:
+                controller_event_args = ControllerEvent.event_args_improc_start
+                connections.append(self.conn_comm_parent)
+                connections.append(self.conn_improc_parent)
+            elif data == IOListener.input_finish:
+                controller_event_args = ControllerEvent.event_args_main_stop
+                connections.append(self.conn_improc_parent)
+                connections.append(self.conn_comm_parent)
+                connections.append(self.conn_io_parent)
+            else:
+                controller_event_args = ControllerEvent.event_args_loc_state
+                controller_event_kwargs = data
+                connections.append(self.conn_comm_parent)
+            event = ControllerEvent(controller_event_args, controller_event_kwargs)
+            self.notify_observers(connections, event)
 
 
 if __name__ == '__main__':

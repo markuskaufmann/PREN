@@ -1,6 +1,5 @@
 from threading import Thread
 from ch.hslu.pren36.pi3b.comm.CommunicatorEvent import CommunicatorEvent
-from ch.hslu.pren36.pi3b.io.SysPseudo import SysPseudo
 from flask import Flask, send_file
 from ch.hslu.pren36.pi3b.main.ControllerEvent import ControllerEvent
 
@@ -10,7 +9,7 @@ app = Flask(__name__)
 class Communicator:
     proc_conn = None
     t_wait = None
-    sys = SysPseudo()
+    t_wait_running = True
     state = None
     loc_x = None
     loc_z = None
@@ -32,19 +31,21 @@ class Communicator:
         communicator.proc_conn.send(event)
 
     def wait(self):
-        controllerevent = communicator.proc_conn.recv()
-        args = controllerevent.args
-        if args == ControllerEvent.event_args_main_start:
-            communicator.state = "Process started Proc"
-        elif args == ControllerEvent.event_args_main_stop:
-            communicator.state = "Process stopped"
-        elif args == ControllerEvent.event_args_improc_target_found:
-            communicator.state = "Target"
-        else:
-            data = ControllerEvent.kwargs.split(";")
-            communicator.state = data[1]
-            communicator.loc_x = data[2]
-            communicator.loc_z = data[3]
+        while communicator.t_wait_running:
+            controllerevent = communicator.proc_conn.recv()
+            args = controllerevent.args
+            if args == ControllerEvent.event_args_main_start:
+                communicator.state = "RESPONSE_PROCESS STARTED"
+            elif args == ControllerEvent.event_args_improc_start:
+                communicator.state = "Start ImageProcessing"
+            elif args == ControllerEvent.event_args_main_stop:
+                communicator.state = "RESPONSE_PROCESS STOPPED"
+            elif args == ControllerEvent.event_args_improc_target_found:
+                communicator.state = "Target found"
+            elif args == ControllerEvent.event_args_loc_state:
+                data = controllerevent.kwargs.split(";")
+                communicator.loc_x = data[0]
+                communicator.loc_z = data[1]
 
 
 communicator = Communicator()
@@ -63,18 +64,18 @@ def icon():
 @app.route("/start")
 def start():
     communicator.send_signal_to_controller(CommunicatorEvent.event_args_start)
-    return "simple start"
+    return "REQUEST_START SENT"
 
 
 @app.route("/stop")
 def stop():
     communicator.send_signal_to_controller(CommunicatorEvent.event_args_stop)
-    return communicator.sys.stop()
+    return "REQUEST_STOP SENT"
 
 
 @app.route("/location")
 def location():
-    loc = communicator.sys.location()
+    loc = str(communicator.loc_x) + ";" + str(communicator.loc_z)
     if communicator.state is not None:
-        loc += ";" + communicator.state
+        loc += ";" + str(communicator.state)
     return loc

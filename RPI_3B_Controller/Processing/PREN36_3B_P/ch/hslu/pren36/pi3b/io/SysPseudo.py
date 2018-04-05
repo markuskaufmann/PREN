@@ -46,16 +46,20 @@ class Simulation:
 
 class SysPseudo:
     simulation = Simulation()
-    started = False
+    queue = None
+    t_loc = None
+    t_loc_running = True
 
-    def start(self):
-        return "Process started"
+    def start(self, queue):
+        self.queue = queue
+        self.t_loc = Thread(target=self.location, name="SysPseudo_Location")
+        self.t_loc.start()
+        self.simulation.start()
 
     def stop(self):
-        return "Process stopped"
+        self.t_loc_running = False
+        self.simulation.interrupt()
 
     def location(self):
-        if not self.started:
-            self.simulation.start()
-            self.started = True
-        return self.simulation.location()
+        while self.t_loc_running:
+            self.queue.put(self.simulation.location())

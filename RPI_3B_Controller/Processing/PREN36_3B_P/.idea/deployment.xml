@@ -5,7 +5,7 @@
       <paths name="RPI_3B">
         <serverdata>
           <mappings>
-            <mapping deploy="/home/pi/pycharm" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/home/pi/pycharm/mp" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

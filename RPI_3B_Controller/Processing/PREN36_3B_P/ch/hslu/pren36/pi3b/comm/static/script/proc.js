@@ -81,10 +81,12 @@ function locationCallback(response) {
         var state = coordinates[2];
         $('#state').text(state);
     }
-    $('#posX').text(x);
-    $('#posZ').text(z);
-    realCubeX = x;
-    realCubeZ = z;
+    if(x !== "None" && z !== "None") {
+        $('#posX').text(x);
+        $('#posZ').text(z);
+        realCubeX = x;
+        realCubeZ = z;
+    }
 }
 
 function initializeCanvas() {
