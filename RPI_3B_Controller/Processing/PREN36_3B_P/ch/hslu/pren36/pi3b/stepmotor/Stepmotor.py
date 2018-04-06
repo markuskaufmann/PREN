@@ -25,9 +25,9 @@ class StepMotor:
     #
     # Das Programm wurde auf 16 microstep/step ausgelegt. Deshalb muss M2 noch auf 5V geschlossen werden
 
-    step_count = SPR * 16   # Microstep /16
-    delay = 0.02 / 4
-    delay_drive = 0.0005 / 4
+    step_count = SPR * 32   # Microstep /16
+    delay = 0.0208 / 4096
+    delay_drive = 0.0005 / 4096
     state = {'stop': 0,    # Zustände des Fahrens
              'acc': 1,
              'drive': 2}
