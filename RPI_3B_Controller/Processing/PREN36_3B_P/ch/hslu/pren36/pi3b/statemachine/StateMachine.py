@@ -7,7 +7,7 @@ import time
 logging.basicConfig(level=logging.INFO)
 # logging.getLogger('transitions').setLevel(logging.INFO)
 
-class StateMachine(object):
+class StateMachine(self):
     targetIsFound = 0
     states = [
         State(name='on'),
