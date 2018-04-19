@@ -19,6 +19,8 @@ class Servomotor:
             p.ChangeDutyCycle(7.5)
             while True:
                 p.ChangeDutyCycle(Servomotor.dc_1)
+                time.sleep(0.5)
+                p.ChangeDutyCycle(0)
                 time.sleep(Servomotor.dc_sleep)
                 p.ChangeDutyCycle(Servomotor.dc_2)
                 time.sleep(Servomotor.dc_sleep)

@@ -3,11 +3,11 @@ import RPi.GPIO as GPIO
 
 
 class StepmotorFahrwerk:
-    DIR = 19  # Direction GPIO Pin
-    STEP = 26  # Step GPIO Pin
+    DIR = 19  # Direction GPIO Pin GREEN
+    STEP = 13  # Step GPIO Pin BLUE
     CW = 1  # Clockwise Rotation
     CCW = 0  # Counterclockwise Rotation
-    SPR = 200 #48  # Steps per Revolution
+    SPR = 48 #48  # Steps per Revolution
     RPM = 100 #Umdrehungen pro Minute
 
     GPIO.setmode(GPIO.BCM)
@@ -27,7 +27,7 @@ class StepmotorFahrwerk:
     # Das Programm wurde auf 16 microstep/step ausgelegt. Deshalb muss M2 noch auf 5V geschlossen werden
 
     step_count = SPR #* 32   # Microstep /16
-    delay = 1 / (RPM*SPR) #0.0208 / 512
+    delay = 1 / 1000 #0.0208 / 512
     delay_drive = 1 / ((RPM*SPR)*2)  #0.0005 / 4096
     state = {'stop': 0,    # Zustände des Fahrens
              'acc': 1,
@@ -44,7 +44,7 @@ class StepmotorFahrwerk:
             sleep(self.delay)
             GPIO.output(StepmotorFahrwerk.STEP, GPIO.LOW)
             sleep(self.delay)
-            delay /= 2
+            delay /= 1.5
         return delay
 
     # Verkürzt das Delay bis es zum Start-wert und hält dann ganz an

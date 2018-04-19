@@ -3,16 +3,16 @@ import RPi.GPIO as GPIO
 
 
 class StepMotor:
-    DIR = 20  # Direction GPIO Pin
-    STEP = 21  # Step GPIO Pin
-    CW = 1  # Clockwise Rotation
-    CCW = 0  # Counterclockwise Rotation
+    DIR = 20  # Direction GPIO Pin GREEN
+    STEP = 21  # Step GPIO Pin BLUE
+    CW = 1  # Clockwise Rotation DOWN
+    CCW = 0  # Counterclockwise Rotation UP
     SPR = 48  # Steps per Revolution
 
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(DIR, GPIO.OUT)       # DIR Pin als Ausgang definieren
     GPIO.setup(STEP, GPIO.OUT)      # STEP Pin als Ausgang definieren
-    GPIO.output(DIR, CW)            # Default Richtung "im Uhrzeigersinn"
+    GPIO.output(DIR, CCW)            # Default Richtung "im Uhrzeigersinn"
 
     # Einstellungen Mode 0|1|2
     # Müssen auf Hardware geändert werden!
