@@ -6,38 +6,61 @@ class Servomotor:
     servoPIN = 2
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(servoPIN, GPIO.OUT)
-    p = GPIO.PWM(servoPIN, 50)  # GPIO 17 als PWM mit 50Hz
+    p = GPIO.PWM(servoPIN, 50)  # GPIO 2 als PWM mit 50Hz
     dc_1 = 4.5
     dc_2 = 8.5
-    dc_sleep = 3
+    dc_sleep = 2
 
-    def start(self):
-        print("Start")
-        p = Servomotor.p
-        p.start(2.5)  # Initialisierung
-        try:
-            p.ChangeDutyCycle(7.5)
-            while True:
-                p.ChangeDutyCycle(Servomotor.dc_1)
-                time.sleep(0.5)
-                p.ChangeDutyCycle(0)
-                time.sleep(Servomotor.dc_sleep)
-                p.ChangeDutyCycle(Servomotor.dc_2)
-                time.sleep(Servomotor.dc_sleep)
-                # p.ChangeDutyCycle(Servomotor.dc_1)
-                # time.sleep(0.5)
-                # p.ChangeDutyCycle(Servomotor.dc_2)
-                # time.sleep(0.5)
-                # p.ChangeDutyCycle(Servomotor.dc_1)
-                # time.sleep(0.5)
-                # p.ChangeDutyCycle(Servomotor.dc_2)
-                # time.sleep(0.5)
-                # p.ChangeDutyCycle(Servomotor.dc_1)
-                # time.sleep(0.5)
-                # p.ChangeDutyCycle(Servomotor.dc_2)
-                # time.sleep(0.5)
-                p.ChangeDutyCycle(7.5)
-        except KeyboardInterrupt:
-            p.ChangeDutyCycle(7.5)
-            p.stop()
-            GPIO.cleanup()
+    # def start(self):
+    #     p = Servomotor.p
+    #     p.start(2.5)  # Initialisierung
+    #     try:
+    #         p.ChangeDutyCycle(7.5)
+    #         time.sleep(0.5)
+    #         while True:
+    #             p.ChangeDutyCycle(Servomotor.dc_1)
+    #             time.sleep(0.1)
+    #             p.ChangeDutyCycle(0)
+    #             time.sleep(Servomotor.dc_sleep)
+    #             p.ChangeDutyCycle(Servomotor.dc_2)
+    #             time.sleep(Servomotor.dc_sleep)
+    #             # p.ChangeDutyCycle(Servomotor.dc_1)
+    #             # time.sleep(0.5)
+    #             # p.ChangeDutyCycle(Servomotor.dc_2)
+    #             # time.sleep(0.5)
+    #             # p.ChangeDutyCycle(Servomotor.dc_1)
+    #             # time.sleep(0.5)
+    #             # p.ChangeDutyCycle(Servomotor.dc_2)
+    #             # time.sleep(0.5)
+    #             # p.ChangeDutyCycle(Servomotor.dc_1)
+    #             # time.sleep(0.5)
+    #             # p.ChangeDutyCycle(Servomotor.dc_2)
+    #             # time.sleep(0.5)
+    #             p.ChangeDutyCycle(7.5)
+    #     except KeyboardInterrupt:
+    #         p.ChangeDutyCycle(7.5)
+    #         p.stop()
+    #         GPIO.cleanup()
+
+    def initialize(self):
+        Servomotor.p.start(2.5)
+
+    def reset(self):
+        Servomotor.p.ChangeDutyCycle(7.5)
+        time.sleep(0.1)
+        Servomotor.p.ChangeDutyCycle(0)
+
+    def open(self):
+        Servomotor.p.ChangeDutyCycle(Servomotor.dc_1)
+        time.sleep(0.1)
+        Servomotor.p.ChangeDutyCycle(0)
+
+    def close(self):
+        Servomotor.p.ChangeDutyCycle(Servomotor.dc_2)
+        time.sleep(0.1)
+        Servomotor.p.ChangeDutyCycle(0)
+
+    def stop(self):
+        self.reset()
+        Servomotor.p.stop()
+        GPIO.cleanup()

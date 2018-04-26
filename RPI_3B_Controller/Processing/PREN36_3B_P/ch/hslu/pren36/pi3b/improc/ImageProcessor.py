@@ -1,6 +1,5 @@
 from threading import Thread
 import cv2
-import imutils
 import numpy
 import time
 from ch.hslu.pren36.pi3b.improc.ImageProcessorEvent import ImageProcessorEvent

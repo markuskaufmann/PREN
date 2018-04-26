@@ -3,17 +3,12 @@ import RPi.GPIO as GPIO
 
 
 class StepmotorFahrwerk:
-    DIR = 19  # Direction GPIO Pin GREEN
+    DIR = 26  # Direction GPIO Pin GREEN
     STEP = 13  # Step GPIO Pin BLUE
     CW = 1  # Clockwise Rotation
     CCW = 0  # Counterclockwise Rotation
     SPR = 48 #48  # Steps per Revolution
     RPM = 100 #Umdrehungen pro Minute
-
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(DIR, GPIO.OUT)       # DIR Pin als Ausgang definieren
-    GPIO.setup(STEP, GPIO.OUT)      # STEP Pin als Ausgang definieren
-    GPIO.output(DIR, CCW)            # Default Richtung "im Uhrzeigersinn"
 
     # Einstellungen Mode 0|1|2
     # Müssen auf Hardware geändert werden!
@@ -27,15 +22,28 @@ class StepmotorFahrwerk:
     # Das Programm wurde auf 16 microstep/step ausgelegt. Deshalb muss M2 noch auf 5V geschlossen werden
 
     step_count = SPR #* 32   # Microstep /16
-    delay = 1 / 1000 #0.0208 / 512
+    delay = 1 / 6000 #0.0208 / 512
     delay_drive = 1 / ((RPM*SPR)*2)  #0.0005 / 4096
     state = {'stop': 0,    # Zustände des Fahrens
              'acc': 1,
              'drive': 2}
     current_state = state['stop']
+    current_direction = CW
+
+    def __init__(self, direction):
+        print(direction)
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(StepmotorFahrwerk.DIR, GPIO.OUT)  # DIR Pin als Ausgang definieren
+        GPIO.setup(StepmotorFahrwerk.STEP, GPIO.OUT)  # STEP Pin als Ausgang definieren
+        self.set_direction(direction)
 
     def set_state(self, state):
         self.current_state = state
+
+    def set_direction(self, direction):
+        self.current_direction = direction
+        self.set_state(StepmotorFahrwerk.state['stop'])
+        GPIO.output(StepmotorFahrwerk.DIR, self.current_direction)
 
     # Verkürzt das Delay bis es kleiner als 0.0005/16 ist -> 1kHz
     def accelerate(self, delay):
@@ -44,7 +52,7 @@ class StepmotorFahrwerk:
             sleep(self.delay)
             GPIO.output(StepmotorFahrwerk.STEP, GPIO.LOW)
             sleep(self.delay)
-            delay /= 1.5
+            delay /= 2
         return delay
 
     # Verkürzt das Delay bis es zum Start-wert und hält dann ganz an

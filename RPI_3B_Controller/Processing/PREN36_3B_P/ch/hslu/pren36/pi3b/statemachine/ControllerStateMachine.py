@@ -1,7 +1,6 @@
 import logging
-from threading import Thread
 import time
-
+from threading import Thread
 from ch.hslu.pren36.pi3b.statemachine.StateMachine import StateMachine
 
 logging.basicConfig(level=logging.INFO)
@@ -10,36 +9,36 @@ logging.basicConfig(level=logging.INFO)
 
 class ControllerStateMachine:
     idle = True
-    running = False
-    t_running = None
+    t_fsm = None
     t_fz = None
-    fz = None
+    fsm = None
 
     def __init__(self):
-        self.fz = StateMachine()
-        self.t_running = Thread(target=self.start_idle)
-        self.t_running.start()
-        self.t_sm = Thread(target=self.fz.control)
-        self.t_sm.start()
+        self.fsm = StateMachine()
+        self.t_fsm = Thread(target=self.start_idle)
+        self.t_fsm.start()
 
     def start_idle(self):
-        self.fz.init()
-        self.fz.readyToDrive()
-        self.fz.cubeFound()
-        self.fz.goDown()
-        self.fz.reachedBottom()
-        self.fz.getCube()
-        self.fz.hasCube()
-        self.fz.isUp()
-        self.fz.targetFound()
-        self.fz.goDown()
-        self.fz.reachedBottom()
-        self.fz.setCube()
-        self.fz.cubeIsSet()
-        self.fz.isUp()
+        while self.idle:
+            time.sleep(0.02)
+        self.fsm.init()
+        # self.fsm.ready_to_drive()
+        # self.fsm.cube_found()
+        # self.fsm.go_down_woc()
+        # self.fsm.reached_surface()
+        # self.fsm.get_cube()
+        # self.fsm.has_cube()
+        # self.fsm.is_up_wc()
+        # self.fsm.target_area_found()
+        # self.fsm.go_down_wc()
+        # self.fsm.reached_surface()
+        # self.fsm.set_cube()
+        # self.fsm.cube_is_set()
+        # self.fsm.is_up_woc()
+        # self.fsm.touched_end()
+        # self.fsm.shut_down()
 
     def run(self):
-        self.running = True
         self.idle = False
 
 
