@@ -20,7 +20,7 @@ class StepMotor:
     #
     # Das Programm wurde auf 16 microstep/step ausgelegt. Deshalb muss M2 noch auf 5V geschlossen werden
 
-    step_count = SPR * 32   # Microstep /16
+    step_count = SPR * 32
     delay = 0.0208 / 4096
     delay_drive = 0.0005 / 4096
     state = {'stop': 0,    # Zustände des Fahrens
@@ -28,11 +28,13 @@ class StepMotor:
              'drive': 2}
     current_state = state['stop']
     current_direction = CW
+    accelerating = False
 
     def __init__(self, direction):
+        GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
-        GPIO.setup(StepMotor.DIR, GPIO.OUT)  # DIR Pin als Ausgang definieren
-        GPIO.setup(StepMotor.STEP, GPIO.OUT)  # STEP Pin als Ausgang definieren
+        GPIO.setup(StepMotor.DIR, GPIO.OUT)
+        GPIO.setup(StepMotor.STEP, GPIO.OUT)
         self.set_direction(direction)
 
     def set_direction(self, direction):
@@ -47,9 +49,9 @@ class StepMotor:
     def accelerate(self, delay):
         while delay > StepMotor.delay_drive:
             GPIO.output(StepMotor.STEP, GPIO.HIGH)
-            sleep(self.delay)
+            sleep(delay)
             GPIO.output(StepMotor.STEP, GPIO.LOW)
-            sleep(self.delay)
+            sleep(delay)
             delay /= 2
         return delay
 
@@ -65,22 +67,24 @@ class StepMotor:
 
     # Normale Fahrt auf höchster Geschwindigkeit
     def drive(self, delay):
-        for x in range(self.step_count):
-            GPIO.output(StepMotor.STEP, GPIO.HIGH)
-            sleep(delay)
-            GPIO.output(StepMotor.STEP, GPIO.LOW)
-            sleep(delay)
+        GPIO.output(StepMotor.STEP, GPIO.HIGH)
+        sleep(delay)
+        GPIO.output(StepMotor.STEP, GPIO.LOW)
+        sleep(delay)
 
     def control(self):
         delay = StepMotor.delay
         while True:
             if self.current_state == StepMotor.state['drive']:
-                self.stop(delay)
+                # self.stop(delay)
+                while self.current_state is not StepMotor.state['stop']:
+                    self.drive(delay)
             elif self.current_state == StepMotor.state['acc']:
-                self.accelerate(delay)
-                if delay < StepMotor.delay_drive:
-                    self.current_state = StepMotor.state['drive']
-                    while self.current_state is not StepMotor.state['stop']:
-                        self.drive(delay)
+                if not self.accelerating:
+                    self.accelerating = True
+                    delay = self.accelerate(delay)
+                    if delay < StepMotor.delay_drive:
+                        self.current_state = StepMotor.state['drive']
+                        self.accelerating = False
             else:
                 self.stop(delay)

@@ -7,8 +7,8 @@ class StepmotorFahrwerk:
     STEP = 13  # Step GPIO Pin BLUE
     CW = 1  # Clockwise Rotation
     CCW = 0  # Counterclockwise Rotation
-    SPR = 48 #48  # Steps per Revolution
-    RPM = 100 #Umdrehungen pro Minute
+    SPR = 48  # Steps per Revolution
+    RPM = 100  # Revolutions per minute
 
     # Einstellungen Mode 0|1|2
     # Müssen auf Hardware geändert werden!
@@ -21,20 +21,21 @@ class StepmotorFahrwerk:
     #
     # Das Programm wurde auf 16 microstep/step ausgelegt. Deshalb muss M2 noch auf 5V geschlossen werden
 
-    step_count = SPR #* 32   # Microstep /16
-    delay = 1 / 6000 #0.0208 / 512
-    delay_drive = 1 / ((RPM*SPR)*2)  #0.0005 / 4096
+    step_count = SPR * 2
+    delay = 0.0208 / 2
+    delay_drive = 1 / 200  # 0.0005 / 4096
     state = {'stop': 0,    # Zustände des Fahrens
              'acc': 1,
              'drive': 2}
     current_state = state['stop']
     current_direction = CW
+    accelerating = False
 
     def __init__(self, direction):
-        print(direction)
+        GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
-        GPIO.setup(StepmotorFahrwerk.DIR, GPIO.OUT)  # DIR Pin als Ausgang definieren
-        GPIO.setup(StepmotorFahrwerk.STEP, GPIO.OUT)  # STEP Pin als Ausgang definieren
+        GPIO.setup(StepmotorFahrwerk.DIR, GPIO.OUT)
+        GPIO.setup(StepmotorFahrwerk.STEP, GPIO.OUT)
         self.set_direction(direction)
 
     def set_state(self, state):
@@ -49,9 +50,9 @@ class StepmotorFahrwerk:
     def accelerate(self, delay):
         while delay > StepmotorFahrwerk.delay_drive:
             GPIO.output(StepmotorFahrwerk.STEP, GPIO.HIGH)
-            sleep(self.delay)
+            sleep(delay)
             GPIO.output(StepmotorFahrwerk.STEP, GPIO.LOW)
-            sleep(self.delay)
+            sleep(delay)
             delay /= 2
         return delay
 
@@ -67,22 +68,24 @@ class StepmotorFahrwerk:
 
     # Normale Fahrt auf höchster Geschwindigkeit
     def drive(self, delay):
-        for x in range(self.step_count):
-            GPIO.output(StepmotorFahrwerk.STEP, GPIO.HIGH)
-            sleep(delay)
-            GPIO.output(StepmotorFahrwerk.STEP, GPIO.LOW)
-            sleep(delay)
+        GPIO.output(StepmotorFahrwerk.STEP, GPIO.HIGH)
+        sleep(delay)
+        GPIO.output(StepmotorFahrwerk.STEP, GPIO.LOW)
+        sleep(delay)
 
     def control(self):
         delay = StepmotorFahrwerk.delay
         while True:
             if self.current_state == StepmotorFahrwerk.state['drive']:
-                self.stop(delay)
+                # self.stop(delay)
+                while self.current_state is not StepmotorFahrwerk.state['stop']:
+                    self.drive(delay)
             elif self.current_state == StepmotorFahrwerk.state['acc']:
-                self.accelerate(delay)
-                if delay < StepmotorFahrwerk.delay_drive:
-                    self.current_state = StepmotorFahrwerk.state['drive']
-                    while self.current_state is not StepmotorFahrwerk.state['stop']:
-                        self.drive(delay)
+                if not self.accelerating:
+                    self.accelerating = True
+                    delay = self.accelerate(delay)
+                    if delay < StepmotorFahrwerk.delay_drive:
+                        self.current_state = StepmotorFahrwerk.state['drive']
+                        self.accelerating = False
             else:
                 self.stop(delay)

@@ -1,6 +1,6 @@
 import time
 from threading import Thread
-from ch.hslu.pren36.pi3b.ultrasound.UltrasoundSensor import UltraSoundSensor
+from ch.hslu.pren36.pi3b.tof.TOFSensor import TOFSensor
 
 
 class ControllerTOFSensor:
@@ -10,7 +10,7 @@ class ControllerTOFSensor:
     ts = None
 
     def __init__(self):
-        self.ts = UltraSoundSensor()
+        self.ts = TOFSensor()
         self.t_running = Thread(target=self.start_idle)
         self.t_running.start()
 
@@ -19,7 +19,7 @@ class ControllerTOFSensor:
             time.sleep(0.02)
         try:
             while self.running:
-                print("distance(x) = %.2f cm" % self.ts.distance())
+                print("distance(z) = %.2f cm" % self.ts.distance())
                 time.sleep(0.5)
         except KeyboardInterrupt:
             self.ts.stop()

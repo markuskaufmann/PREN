@@ -3,10 +3,13 @@ import time
 
 
 class Servomotor:
-    servoPIN = 2
+    GPIO_SERVO = 2
+
+    GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BCM)
-    GPIO.setup(servoPIN, GPIO.OUT)
-    p = GPIO.PWM(servoPIN, 50)  # GPIO 2 als PWM mit 50Hz
+    GPIO.setup(GPIO_SERVO, GPIO.OUT)
+    p = GPIO.PWM(GPIO_SERVO, 50)  # GPIO 2 als PWM mit 50Hz
+
     dc_1 = 4.5
     dc_2 = 8.5
     dc_sleep = 2

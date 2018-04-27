@@ -8,6 +8,7 @@ from ch.hslu.pren36.pi3b.main.ControllerEvent import ControllerEvent
 from ch.hslu.pren36.pi3b.servomotor.Servomotor import Servomotor
 from ch.hslu.pren36.pi3b.stepmotor.Stepmotor import StepMotor
 from ch.hslu.pren36.pi3b.stepmotorFahrwerk.StepmotorFahrwerk import StepmotorFahrwerk
+from ch.hslu.pren36.pi3b.tof.TOFSensor import TOFSensor
 from ch.hslu.pren36.pi3b.ultrasound.UltrasoundSensor import UltraSoundSensor
 
 logging.basicConfig(level=logging.INFO)
@@ -138,7 +139,7 @@ class StateMachine:
             self.ultrasound = UltraSoundSensor()
             self.t_ultrasound = Thread(target=self.ultrasound_control)
             self.t_ultrasound.start()
-            self.tof = None
+            self.tof = TOFSensor()
             self.t_tof = Thread(target=self.tof_control)
             self.t_tof.start()
 
@@ -146,7 +147,6 @@ class StateMachine:
 
     def servo_control(self):
         self.servo_grab.initialize()
-        self.servo_grab.reset()
         while self.servo_run:
             while self.servo_wait:
                 time.sleep(0.02)
@@ -171,7 +171,7 @@ class StateMachine:
         while self.tof_wait:
             time.sleep(0.02)
         while not self.tof_wait:
-            self.dist_z = 40
+            self.dist_z = self.tof.distance()
             print(self.dist_z)
             time.sleep(0.5)
 
@@ -192,7 +192,7 @@ class StateMachine:
         self.reset_after_stop()
 
     def smd_drive_forward(self):
-        self.step_drive.set_direction(StepmotorFahrwerk.CW)
+        self.step_drive.set_direction(StepmotorFahrwerk.CCW)
         self.step_drive.set_state(StepmotorFahrwerk.state['acc'])
 
     def smd_stop_driving(self):
