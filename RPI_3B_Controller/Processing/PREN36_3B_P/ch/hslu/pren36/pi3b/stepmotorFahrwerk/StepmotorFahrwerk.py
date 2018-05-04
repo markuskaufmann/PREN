@@ -7,8 +7,8 @@ class StepmotorFahrwerk:
     STEP = 13  # Step GPIO Pin BLUE
     CW = 1  # Clockwise Rotation
     CCW = 0  # Counterclockwise Rotation
-    SPR = 48  # Steps per Revolution
-    RPM = 100  # Revolutions per minute
+    SPR = 400  # Steps per Revolution
+    RPM = 200  # Revolutions per minute
 
     # Einstellungen Mode 0|1|2
     # Müssen auf Hardware geändert werden!
@@ -22,8 +22,11 @@ class StepmotorFahrwerk:
     # Das Programm wurde auf 16 microstep/step ausgelegt. Deshalb muss M2 noch auf 5V geschlossen werden
 
     step_count = SPR * 2
-    delay = 0.0208 / 2
-    delay_drive = 1 / 200  # 0.0005 / 4096
+    steps = 0
+    steps_acc = 0
+    steps_stop = 0
+    delay = 1 / 100  # 0.0208 / 2
+    delay_drive = 1 / 600  # 0.0005 / 4096
     state = {'stop': 0,    # Zustände des Fahrens
              'acc': 1,
              'drive': 2}
@@ -53,7 +56,8 @@ class StepmotorFahrwerk:
             sleep(delay)
             GPIO.output(StepmotorFahrwerk.STEP, GPIO.LOW)
             sleep(delay)
-            delay /= 2
+            delay /= 1.01
+            self.steps_acc += 1
         return delay
 
     # Verkürzt das Delay bis es zum Start-wert und hält dann ganz an
@@ -63,15 +67,18 @@ class StepmotorFahrwerk:
             sleep(delay)
             GPIO.output(StepmotorFahrwerk.STEP, GPIO.LOW)
             sleep(delay)
-            delay *= 2
+            delay *= 1.01
+            self.steps_stop += 1
         return delay
 
     # Normale Fahrt auf höchster Geschwindigkeit
     def drive(self, delay):
-        GPIO.output(StepmotorFahrwerk.STEP, GPIO.HIGH)
-        sleep(delay)
-        GPIO.output(StepmotorFahrwerk.STEP, GPIO.LOW)
-        sleep(delay)
+        for step in range(0, self.step_count):
+            GPIO.output(StepmotorFahrwerk.STEP, GPIO.HIGH)
+            sleep(delay)
+            GPIO.output(StepmotorFahrwerk.STEP, GPIO.LOW)
+            sleep(delay)
+            self.steps += 1
 
     def control(self):
         delay = StepmotorFahrwerk.delay

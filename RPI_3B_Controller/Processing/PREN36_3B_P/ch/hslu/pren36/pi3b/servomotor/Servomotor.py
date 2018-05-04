@@ -3,7 +3,7 @@ import time
 
 
 class Servomotor:
-    GPIO_SERVO = 2
+    GPIO_SERVO = 4
 
     GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BCM)
