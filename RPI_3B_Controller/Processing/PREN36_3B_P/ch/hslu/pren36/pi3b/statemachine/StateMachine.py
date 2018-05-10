@@ -3,6 +3,8 @@ import time
 from threading import Thread
 from multiprocessing import Process, Pipe
 from transitions import Machine, State
+
+from ch.hslu.pren36.pi3b.endswitch.EndSwitch import EndSwitch
 from ch.hslu.pren36.pi3b.main.Controller import Controller
 from ch.hslu.pren36.pi3b.main.ControllerEvent import ControllerEvent
 from ch.hslu.pren36.pi3b.servomotor.Servomotor import Servomotor
@@ -52,6 +54,9 @@ class StateMachine:
     tof = None
     t_tof = None
     tof_wait = True
+    end_switch = None
+    t_end_switch = None
+    end_switch_wait = True
 
     # states
     states = [
@@ -91,7 +96,7 @@ class StateMachine:
         self.machine.add_transition(trigger='cube_is_set', source='set_cube', dest='drive_up', before='stop_location',
                                     after='on_the_top_woc')
         self.machine.add_transition(trigger='is_up_woc', source='drive_up', dest='drive', before='close_grabber',
-                                    after='simulate_touch')
+                                    after='wait_for_touch')
         self.machine.add_transition(trigger='touched_end', source='drive', dest='reach_end', after='finish')
         self.machine.add_transition(trigger='shut_down', source='reach_end', dest='off', before='clean_up')
 
@@ -142,6 +147,9 @@ class StateMachine:
             self.tof = TOFSensor()
             self.t_tof = Thread(target=self.tof_control)
             self.t_tof.start()
+            self.end_switch = EndSwitch()
+            self.t_end_switch = Thread(target=self.tof_control)
+            self.t_end_switch.start()
 
             self.ready_to_drive()
 
@@ -174,6 +182,17 @@ class StateMachine:
             self.dist_z = self.tof.distance()
             print(self.dist_z)
             time.sleep(0.5)
+
+    def end_switch_control(self):
+        while True:
+            while self.end_switch_wait:
+                time.sleep(0.02)
+            while not self.end_switch_wait:
+                signal = self.end_switch.signal()
+                if signal == 0:
+                    self.end_switch_wait = True
+                    self.touched_end()
+                time.sleep(0.2)
 
     def receive_start_signal(self):
         while not self.input_main_start:
@@ -235,9 +254,8 @@ class StateMachine:
         time.sleep(3)
         self.reached_surface()
 
-    def simulate_touch(self):
-        time.sleep(3)
-        self.touched_end()
+    def wait_for_touch(self):
+        self.end_switch_wait = False
 
     def on_the_ground_woc(self):
         self.get_cube()

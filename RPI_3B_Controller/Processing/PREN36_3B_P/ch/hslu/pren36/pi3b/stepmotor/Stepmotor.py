@@ -1,5 +1,6 @@
 from time import sleep
 import RPi.GPIO as GPIO
+import numpy as np
 
 
 class StepMotor:
@@ -8,6 +9,9 @@ class StepMotor:
     CW = 1  # Clockwise Rotation DOWN
     CCW = 0  # Counterclockwise Rotation UP
     SPR = 48  # Steps per Revolution
+    STEP_MOD = 32  # 32 microstep/step
+    DIA = 15
+    PER = DIA * np.pi
 
     # Einstellungen Mode 0|1|2
     # Müssen auf Hardware geändert werden!
@@ -17,13 +21,14 @@ class StepMotor:
     # 110 8 microstep/step
     # 001 16 microstep/step
     # 101 32 microstep/step
-    #
-    # Das Programm wurde auf 16 microstep/step ausgelegt. Deshalb muss M2 noch auf 5V geschlossen werden
 
-    step_count = SPR * 32
+    step_count = SPR * STEP_MOD
+    steps = 0
+    steps_acc = 0
+    steps_stop = 0
     delay = 0.0208 / 4096
     delay_drive = 0.0005 / 4096
-    state = {'stop': 0,    # Zustände des Fahrens
+    state = {'stop': 0,
              'acc': 1,
              'drive': 2}
     current_state = state['stop']
@@ -52,7 +57,8 @@ class StepMotor:
             sleep(delay)
             GPIO.output(StepMotor.STEP, GPIO.LOW)
             sleep(delay)
-            delay /= 2
+            delay /= 1.1
+            self.steps_acc += 1
         return delay
 
     # Verkürzt das Delay bis es zum Start-wert und hält dann ganz an
@@ -62,15 +68,18 @@ class StepMotor:
             sleep(delay)
             GPIO.output(StepMotor.STEP, GPIO.LOW)
             sleep(delay)
-            delay *= 2
+            delay *= 1.1
+            self.steps_stop += 1
         return delay
 
     # Normale Fahrt auf höchster Geschwindigkeit
     def drive(self, delay):
-        GPIO.output(StepMotor.STEP, GPIO.HIGH)
-        sleep(delay)
-        GPIO.output(StepMotor.STEP, GPIO.LOW)
-        sleep(delay)
+        for i in range(0, self.step_count):
+            GPIO.output(StepMotor.STEP, GPIO.HIGH)
+            sleep(delay)
+            GPIO.output(StepMotor.STEP, GPIO.LOW)
+            sleep(delay)
+            self.steps += 1
 
     def control(self):
         delay = StepMotor.delay

@@ -1,5 +1,6 @@
 from time import sleep
 import RPi.GPIO as GPIO
+import numpy as np
 
 
 class StepmotorFahrwerk:
@@ -9,6 +10,9 @@ class StepmotorFahrwerk:
     CCW = 0  # Counterclockwise Rotation
     SPR = 400  # Steps per Revolution
     RPM = 200  # Revolutions per minute
+    STEP_MOD = 2  # 1/2 Step
+    DIA = 85
+    PER = DIA * np.pi
 
     # Einstellungen Mode 0|1|2
     # Müssen auf Hardware geändert werden!
@@ -18,16 +22,14 @@ class StepmotorFahrwerk:
     # 110 8 microstep/step
     # 001 16 microstep/step
     # 101 32 microstep/step
-    #
-    # Das Programm wurde auf 16 microstep/step ausgelegt. Deshalb muss M2 noch auf 5V geschlossen werden
 
-    step_count = SPR * 2
+    step_count = SPR * STEP_MOD
     steps = 0
     steps_acc = 0
     steps_stop = 0
     delay = 1 / 100  # 0.0208 / 2
     delay_drive = 1 / 600  # 0.0005 / 4096
-    state = {'stop': 0,    # Zustände des Fahrens
+    state = {'stop': 0,
              'acc': 1,
              'drive': 2}
     current_state = state['stop']

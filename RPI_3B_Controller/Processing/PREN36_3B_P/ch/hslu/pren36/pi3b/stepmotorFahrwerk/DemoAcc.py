@@ -1,43 +1,104 @@
+import math
 import time
-from threading import Thread
+import numpy as np
 
 
 class DemoAcc:
-    idle = True
-    t_main = None
+    RPM = 200
+    RPS = RPM / 60
+    SPR = 400
+    STEP_MOD = 2  # 1/2 Step
+    SPS = RPS * (SPR * STEP_MOD)
+    DIA = 85  # [mm]
+    PER = DIA * np.pi  # [mm]
 
+    steps = 0
     steps_acc = 0
-    delay = 1 / 100  # 0.0208 / 2
-    delay_drive = 1 / 600  # 0.0005 / 4096
-
-    SPR = 48
+    steps_stop = 0
+    def_steps_acc = 0
+    def_steps_stop = 0
+    delay_drive = 1 / (SPS * 2)  # 0.0005 / 4096
+    delay = delay_drive * 3  # 0.0208 / 2
 
     def __init__(self):
-        self.t_main = Thread(target=self.start_idle)
-        self.t_main.start()
+        pass
 
-    def start_idle(self):
-        while self.idle:
-            time.sleep(0.02)
-        print("res: " + str(self.accelerate(self.delay)))
-        print("steps: " + str(self.steps_acc))
-        print("revs: " + str(self.steps_acc / DemoAcc.SPR))
-
-    def accelerate(self, delay):
-        while delay > self.delay_drive:
+    def accelerate(self, delay, steps):
+        print("on accelerate")
+        while delay > self.delay_drive and steps != 0:
             # GPIO.output(StepmotorFahrwerk.STEP, GPIO.HIGH)
             time.sleep(delay)
             # GPIO.output(StepmotorFahrwerk.STEP, GPIO.LOW)
             time.sleep(delay)
             delay /= 1.01
-            self.steps_acc += 1
-            print(delay)
+            steps -= 1
         return delay
 
-    def run(self):
-        self.idle = False
+    def drive(self, delay, step_count):
+        print("on drive")
+        for step in range(0, step_count):
+            # GPIO.output(StepmotorFahrwerk.STEP, GPIO.HIGH)
+            time.sleep(delay)
+            # GPIO.output(StepmotorFahrwerk.STEP, GPIO.LOW)
+            time.sleep(delay)
+
+    def stop(self, delay, steps):
+        print("on stop")
+        while delay < self.delay and steps != 0:
+            # GPIO.output(StepmotorFahrwerk.STEP, GPIO.HIGH)
+            time.sleep(delay)
+            # GPIO.output(StepmotorFahrwerk.STEP, GPIO.LOW)
+            time.sleep(delay)
+            delay *= 1.01
+            steps -= 1
+        return delay
+
+    def calc_acc(self, delay, steps):
+        self.steps_acc = 0
+        while delay > self.delay_drive and steps != 0:
+            delay /= 1.01
+            steps -= 1
+            self.steps_acc += 1
+        return delay, steps
+
+    def calc_stop(self, delay, steps):
+        self.steps_stop = 0
+        while delay < self.delay and steps != 0:
+            delay *= 1.01
+            steps -= 1
+            self.steps_stop += 1
+        return steps
+
+    def move_distance(self, distance_cm):
+        distance = distance_cm * 10
+        self.control(distance)
+
+    def control(self, distance):
+        revs = distance / DemoAcc.PER
+        print(revs)
+        self.steps = int(math.ceil(revs * DemoAcc.SPR))
+        print("steps: %d" % self.steps)
+        d_acc, s_acc = self.calc_acc(self.delay, self.steps)
+        s_stop = self.calc_stop(d_acc, self.steps)
+        steps_acc_stop = self.steps_acc
+        print("acc steps theoretical: %d" % self.steps_acc)
+        print("stop steps theoretical: %d" % self.steps_stop)
+        if self.steps < (self.steps_acc + self.steps_stop):
+            steps_acc_stop = int(math.ceil(self.steps / 2))
+        print("acc / stop steps: %d" % steps_acc_stop)
+        s_drive = self.steps - steps_acc_stop * 2
+        print("drive steps: %d" % s_drive)
+
+        delay = self.delay
+        now = time.time()
+        delay = self.accelerate(delay, steps_acc_stop)
+        self.drive(delay, s_drive)
+        self.stop(delay, steps_acc_stop)
+        duration = time.time() - now
+        print("steps total: %d" % (steps_acc_stop * 2 + s_drive))
+        print("duration: " + str(duration))
 
 
 if __name__ == '__main__':
     da = DemoAcc()
-    da.run()
+    da.move_distance(20)
