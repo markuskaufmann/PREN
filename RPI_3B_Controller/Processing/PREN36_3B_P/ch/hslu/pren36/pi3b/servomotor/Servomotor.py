@@ -64,6 +64,6 @@ class Servomotor:
         Servomotor.p.ChangeDutyCycle(0)
 
     def stop(self):
-        self.reset()
+        # self.reset()
         Servomotor.p.stop()
         GPIO.cleanup()

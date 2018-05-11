@@ -148,7 +148,7 @@ class StateMachine:
             self.t_tof = Thread(target=self.tof_control)
             self.t_tof.start()
             self.end_switch = EndSwitch()
-            self.t_end_switch = Thread(target=self.tof_control)
+            self.t_end_switch = Thread(target=self.end_switch_control)
             self.t_end_switch.start()
 
             self.ready_to_drive()
@@ -189,7 +189,7 @@ class StateMachine:
                 time.sleep(0.02)
             while not self.end_switch_wait:
                 signal = self.end_switch.signal()
-                if signal == 0:
+                if signal == 1:
                     self.end_switch_wait = True
                     self.touched_end()
                 time.sleep(0.2)

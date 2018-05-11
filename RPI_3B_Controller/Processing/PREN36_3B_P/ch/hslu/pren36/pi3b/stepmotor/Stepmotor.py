@@ -6,8 +6,8 @@ import numpy as np
 class StepMotor:
     DIR = 21  # Direction GPIO Pin GREEN
     STEP = 16  # Step GPIO Pin BLUE
-    CW = 1  # Clockwise Rotation DOWN
-    CCW = 0  # Counterclockwise Rotation UP
+    CW = 1  # Clockwise Rotation UP
+    CCW = 0  # Counterclockwise Rotation DOWN
     SPR = 48  # Steps per Revolution
     STEP_MOD = 32  # 32 microstep/step
     DIA = 15

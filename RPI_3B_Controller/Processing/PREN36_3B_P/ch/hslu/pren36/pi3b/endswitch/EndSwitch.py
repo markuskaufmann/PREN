@@ -2,7 +2,7 @@ import RPi.GPIO as GPIO
 
 
 class EndSwitch:
-    GPIO_PIN = -1
+    GPIO_PIN = 9
 
     GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BCM)

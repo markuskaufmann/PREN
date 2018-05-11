@@ -4,13 +4,15 @@ import numpy as np
 
 
 class DemoAcc:
-    RPM = 200
+    RPM = 100
     RPS = RPM / 60
-    SPR = 400
+    SPR = 200
     STEP_MOD = 2  # 1/2 Step
     SPS = RPS * (SPR * STEP_MOD)
+    DIA_MOTOR = 5  # [mm]
     DIA = 85  # [mm]
-    PER = DIA * np.pi  # [mm]
+    DIA_MOD = DIA / DIA_MOTOR
+    PER = DIA_MOTOR * np.pi  # [mm]
 
     steps = 0
     steps_acc = 0
@@ -18,7 +20,7 @@ class DemoAcc:
     def_steps_acc = 0
     def_steps_stop = 0
     delay_drive = 1 / (SPS * 2)  # 0.0005 / 4096
-    delay = delay_drive * 3  # 0.0208 / 2
+    delay = delay_drive * 8  # 0.0208 / 2
 
     def __init__(self):
         pass
@@ -70,13 +72,14 @@ class DemoAcc:
         return steps
 
     def move_distance(self, distance_cm):
-        distance = distance_cm * 10
-        self.control(distance)
+        self.control(distance_cm)
 
-    def control(self, distance):
+    def control(self, distance_cm):
+        distance = distance_cm * 10
+        print("distance: %d mm" % distance)
         revs = distance / DemoAcc.PER
         print(revs)
-        self.steps = int(math.ceil(revs * DemoAcc.SPR))
+        self.steps = int(math.ceil(revs * DemoAcc.SPR * DemoAcc.STEP_MOD))
         print("steps: %d" % self.steps)
         d_acc, s_acc = self.calc_acc(self.delay, self.steps)
         s_stop = self.calc_stop(d_acc, self.steps)
@@ -101,4 +104,4 @@ class DemoAcc:
 
 if __name__ == '__main__':
     da = DemoAcc()
-    da.move_distance(20)
+    da.move_distance(1)

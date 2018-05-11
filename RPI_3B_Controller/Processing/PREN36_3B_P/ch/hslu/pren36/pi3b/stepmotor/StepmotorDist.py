@@ -2,22 +2,21 @@ import math
 from time import sleep
 import RPi.GPIO as GPIO
 import numpy as np
-from ch.hslu.pren36.pi3b.stepmotorFahrwerk.AccMode import AccMode
 
 
-class StepmotorFahrwerk:
-    DIR = 26  # Direction GPIO Pin GREEN
-    STEP = 13  # Step GPIO Pin BLUE
+class Stepmotor:
+    DIR = 21  # Direction GPIO Pin GREEN
+    STEP = 16  # Step GPIO Pin BLUE
     CW = 1  # Clockwise Rotation UP
     CCW = 0  # Counterclockwise Rotation DOWN
-    RPM = 105
+    RPM = 500
     RPS = RPM / 60
     SPR = 200
-    STEP_MOD = 2  # 1/2 Step
+    STEP_MOD = 32  # 1/32 Step
     DELAY_MOD = 8
     SPS = RPS * (SPR * STEP_MOD)
     DIA_MOTOR = 5  # [mm]
-    DIA = 85  # [mm]
+    DIA = 15  # [mm]
     DIA_MOD = DIA / DIA_MOTOR
     PER = DIA_MOTOR * np.pi  # [mm]
 
@@ -49,27 +48,23 @@ class StepmotorFahrwerk:
     delay = delay_drive * DELAY_MOD  # 0.0208 / 2
     current_state = STATE_STOP
     current_direction = CW
-    current_acc = AccMode.MODE_START[2]
     accelerating = False
     stopping = False
 
     def __init__(self, direction):
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
-        GPIO.setup(StepmotorFahrwerk.DIR, GPIO.OUT)
-        GPIO.setup(StepmotorFahrwerk.STEP, GPIO.OUT)
+        GPIO.setup(Stepmotor.DIR, GPIO.OUT)
+        GPIO.setup(Stepmotor.STEP, GPIO.OUT)
         self.set_direction(direction)
 
     def set_state(self, state):
         self.current_state = state
 
-    def set_acc_mode(self, mode):
-        self.current_acc = mode
-
     def set_direction(self, direction):
         self.current_direction = direction
-        self.set_state(StepmotorFahrwerk.STATE_STOP)
-        GPIO.output(StepmotorFahrwerk.DIR, self.current_direction)
+        self.set_state(Stepmotor.STATE_STOP)
+        GPIO.output(Stepmotor.DIR, self.current_direction)
 
     def calc_acc(self, delay, steps):
         self.steps_acc = 0
@@ -94,8 +89,8 @@ class StepmotorFahrwerk:
             self.steps = -1
         else:
             self.distance = distance_cm * 10
-            revs = self.distance / StepmotorFahrwerk.PER
-            self.steps = int(math.ceil(revs * StepmotorFahrwerk.SPR * StepmotorFahrwerk.STEP_MOD))
+            revs = self.distance / Stepmotor.PER
+            self.steps = int(math.ceil(revs * Stepmotor.SPR * Stepmotor.STEP_MOD))
             print("steps calc: %d" % self.steps)
         d_acc, s_acc = self.calc_acc(self.delay, self.steps)
         s_stop = self.calc_stop(d_acc, self.steps)
@@ -112,9 +107,9 @@ class StepmotorFahrwerk:
     def accelerate(self, delay, steps):
         print("accelerate")
         while delay > self.delay_drive and steps != 0:
-            GPIO.output(StepmotorFahrwerk.STEP, GPIO.HIGH)
+            GPIO.output(Stepmotor.STEP, GPIO.HIGH)
             sleep(delay)
-            GPIO.output(StepmotorFahrwerk.STEP, GPIO.LOW)
+            GPIO.output(Stepmotor.STEP, GPIO.LOW)
             sleep(delay)
             delay /= 1.01
             steps -= 1
@@ -124,9 +119,9 @@ class StepmotorFahrwerk:
         if self.stopping:
             print("stop")
             while delay < self.delay and steps != 0:
-                GPIO.output(StepmotorFahrwerk.STEP, GPIO.HIGH)
+                GPIO.output(Stepmotor.STEP, GPIO.HIGH)
                 sleep(delay)
-                GPIO.output(StepmotorFahrwerk.STEP, GPIO.LOW)
+                GPIO.output(Stepmotor.STEP, GPIO.LOW)
                 sleep(delay)
                 delay *= 1.01
                 steps -= 1
@@ -137,38 +132,38 @@ class StepmotorFahrwerk:
         print("drive")
         steps = 0
         while steps < step_count or step_count == -1:
-            GPIO.output(StepmotorFahrwerk.STEP, GPIO.HIGH)
+            GPIO.output(Stepmotor.STEP, GPIO.HIGH)
             sleep(delay)
-            GPIO.output(StepmotorFahrwerk.STEP, GPIO.LOW)
+            GPIO.output(Stepmotor.STEP, GPIO.LOW)
             sleep(delay)
             steps += 1
 
-    def move_distance(self, distance_cm, acc_mode):
+    def move_distance(self, distance_cm, direction):
         self.calc_steps(distance_cm)
-        self.set_acc_mode(acc_mode[2])
-        self.set_state(StepmotorFahrwerk.STATE_ACC)
+        self.set_direction(direction)
+        self.set_state(Stepmotor.STATE_ACC)
 
-    def move_continuous(self, acc_mode):
+    def move_continuous(self, direction):
         self.calc_steps(-1)
-        self.set_acc_mode(acc_mode[2])
-        self.set_state(StepmotorFahrwerk.STATE_ACC)
+        self.set_direction(direction)
+        self.set_state(Stepmotor.STATE_ACC)
 
     def control(self):
-        delay = StepmotorFahrwerk.delay
+        delay = Stepmotor.delay
         while True:
-            if self.current_state == StepmotorFahrwerk.STATE_DRIVE:
+            if self.current_state == Stepmotor.STATE_DRIVE:
                 # while self.current_state is not StepmotorFahrwerk.STATE_STOP:
                 self.drive(delay, self.steps_drive)
                 print("set stop")
-                self.set_state(StepmotorFahrwerk.STATE_STOP)
-            elif self.current_state == StepmotorFahrwerk.STATE_ACC:
+                self.set_state(Stepmotor.STATE_STOP)
+            elif self.current_state == Stepmotor.STATE_ACC:
                 if not self.accelerating:
                     self.accelerating = True
                     self.stopping = True
                     delay = self.accelerate(delay, self.steps_acc_stop)
                     # if delay < StepmotorFahrwerk.delay_drive:
                     print("set drive")
-                    self.set_state(StepmotorFahrwerk.STATE_DRIVE)
+                    self.set_state(Stepmotor.STATE_DRIVE)
                     self.accelerating = False
             else:
                 self.stop(delay, self.steps_acc_stop)

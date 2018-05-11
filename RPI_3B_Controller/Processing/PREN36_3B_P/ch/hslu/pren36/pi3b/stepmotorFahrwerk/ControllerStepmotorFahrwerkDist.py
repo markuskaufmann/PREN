@@ -1,4 +1,6 @@
 import sys
+import time
+from threading import Thread
 
 from ch.hslu.pren36.pi3b.stepmotorFahrwerk.AccMode import AccMode
 from ch.hslu.pren36.pi3b.stepmotorFahrwerk.StepmotorFahrwerkDist import StepmotorFahrwerk
@@ -6,9 +8,12 @@ from ch.hslu.pren36.pi3b.stepmotorFahrwerk.StepmotorFahrwerkDist import Stepmoto
 
 class ControllerStepmotorFahrwerkDist:
     sm = None
+    t_sm = None
 
     def __init__(self):
         self.sm = StepmotorFahrwerk(1)
+        self.t_sm = Thread(target=self.sm.control)
+        self.t_sm.start()
 
     def move_distance(self, distance_cm):
         try:
