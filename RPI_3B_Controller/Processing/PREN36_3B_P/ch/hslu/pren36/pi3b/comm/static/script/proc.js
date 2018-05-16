@@ -51,7 +51,7 @@ function updateCoordinates() {
 
 function sendAjaxRequest(action, callback) {
     $.ajax({
-        url: "http://localhost:8080/" + action,
+        url: "http://192.168.2.1:8080/" + action,
         type: "GET",
         success: callback
     });
@@ -75,8 +75,8 @@ function locationCallback(response) {
         return;
     }
     var coordinates = response.split(";");
-    var x = coordinates[0];
-    var z = coordinates[1];
+    var x = coordinates[0] / 10;
+    var z = coordinates[1] / 10;
     if(coordinates.length === 3) {
         var state = coordinates[2];
         $('#state').text(state);

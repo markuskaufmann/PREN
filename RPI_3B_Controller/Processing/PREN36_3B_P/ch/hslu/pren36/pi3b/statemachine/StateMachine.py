@@ -1,20 +1,21 @@
 import logging
 import time
-from threading import Thread
 from multiprocessing import Process, Pipe
+from threading import Thread
+
 from transitions import Machine, State
 
 from ch.hslu.pren36.pi3b.endswitch.EndSwitch import EndSwitch
+from ch.hslu.pren36.pi3b.lookup.DistanceLookup import DistanceLookup
+from ch.hslu.pren36.pi3b.lookup.Locator import Locator
 from ch.hslu.pren36.pi3b.main.Controller import Controller
 from ch.hslu.pren36.pi3b.main.ControllerEvent import ControllerEvent
 from ch.hslu.pren36.pi3b.servomotor.Servomotor import Servomotor
-from ch.hslu.pren36.pi3b.stepmotor.Stepmotor import StepMotor
-from ch.hslu.pren36.pi3b.stepmotorFahrwerk.StepmotorFahrwerk import StepmotorFahrwerk
-from ch.hslu.pren36.pi3b.tof.TOFSensor import TOFSensor
-from ch.hslu.pren36.pi3b.ultrasound.UltrasoundSensor import UltraSoundSensor
+from ch.hslu.pren36.pi3b.stepmotor.StepmotorDist import Stepmotor
+from ch.hslu.pren36.pi3b.stepmotorFahrwerk.AccMode import AccMode
+from ch.hslu.pren36.pi3b.stepmotorFahrwerk.StepmotorFahrwerkDist import StepmotorFahrwerk
 
 logging.basicConfig(level=logging.INFO)
-# logging.getLogger('transitions').setLevel(logging.INFO)
 
 
 class StateMachine:
@@ -48,26 +49,31 @@ class StateMachine:
     servo_close = False
 
     # sensors
-    ultrasound = None
-    t_ultrasound = None
-    ultrasound_wait = True
-    tof = None
-    t_tof = None
-    tof_wait = True
+    # ultrasound = None
+    # t_ultrasound = None
+    # ultrasound_wait = True
+    # tof = None
+    # t_tof = None
+    # tof_wait = True
     end_switch = None
     t_end_switch = None
     end_switch_wait = True
+
+    # location
+    t_location = None
+    location_wait = True
+    current_z = 0
 
     # states
     states = [
         State(name='on'),
         State(name='off'),
-        State(name='drive', on_enter=['smd_drive_forward']),
+        State(name='drive'),
         State(name='stop', on_enter=['smd_stop_driving']),
-        State(name='drive_down', on_enter=['sms_drive_down']),
-        State(name='is_down', on_enter=['sms_stop_driving']),
+        State(name='drive_down'),
+        State(name='is_down'),
         State(name='get_cube'),
-        State(name='drive_up', on_enter=['sms_drive_up']),
+        State(name='drive_up'),
         State(name='set_cube', on_enter=['place_cube']),
         State(name='reach_end', on_enter=['smd_stop_driving'])
     ]
@@ -77,28 +83,29 @@ class StateMachine:
 
         self.machine.add_transition(trigger='init', source='off', dest='on', after='initialize')
         self.machine.add_transition(trigger='ready_to_drive', source='on', dest='drive',
-                                    before='receive_start_signal', after='stop_for_cube')
+                                    before='receive_start_signal', after='receive_cube')
         self.machine.add_transition(trigger='cube_found', source='drive', dest='stop', after='open_grabber')
-        self.machine.add_transition(trigger='go_down_woc', source='stop', dest='drive_down', after='simulate_ground')
+        self.machine.add_transition(trigger='go_down_woc', source='stop', dest='drive_down', after='drive_to_ground')
         self.machine.add_transition(trigger='reached_surface', source='drive_down', dest='is_down',
                                     after='on_the_ground_woc')
         self.machine.add_transition(trigger='get_cube', source='is_down', dest='get_cube', after='close_grabber_wc')
         self.machine.add_transition(trigger='has_cube', source='get_cube', dest='drive_up', before='start_location',
-                                    after='on_the_top_wc')
+                                    after='drive_up_wc')
         self.machine.add_transition(trigger='is_up_wc', source='drive_up', dest='drive', before='sms_stop_driving',
                                     after='find_target')
         self.machine.add_transition(trigger='target_area_found', source='drive', dest='stop')
         self.machine.add_transition(trigger='go_down_wc', source='stop', dest='drive_down',
-                                    before='adjust_target_location', after='simulate_ground')
+                                    before='adjust_target_location', after='drive_to_ground')
         self.machine.add_transition(trigger='reached_surface', source='drive_down', dest='is_down',
                                     after='on_the_ground_wc')
         self.machine.add_transition(trigger='set_cube', source='is_down', dest='set_cube')
         self.machine.add_transition(trigger='cube_is_set', source='set_cube', dest='drive_up', before='stop_location',
-                                    after='on_the_top_woc')
+                                    after='drive_up_woc')
         self.machine.add_transition(trigger='is_up_woc', source='drive_up', dest='drive', before='close_grabber',
                                     after='wait_for_touch')
         self.machine.add_transition(trigger='touched_end', source='drive', dest='reach_end', after='finish')
-        self.machine.add_transition(trigger='shut_down', source='reach_end', dest='off', before='clean_up')
+        self.machine.add_transition(trigger='shut_down', source='reach_end', dest='on', before='clean_up',
+                                    after='initialize')
 
         # emergency stop transitions
         self.machine.add_transition(trigger='emergency_stop', source='drive', dest='stop')
@@ -109,7 +116,7 @@ class StateMachine:
         self.machine.add_transition(trigger='emergency_stop', source='drive_up', dest='stop')
         self.machine.add_transition(trigger='emergency_stop', source='set_cube', dest='stop')
         self.machine.add_transition(trigger='emergency_stop', source='reach_end', dest='stop')
-        self.machine.add_transition(trigger='reset_after_stop', source='stop', dest='on')
+        self.machine.add_transition(trigger='reset_after_stop', source='stop', dest='on', after='initialize')
 
     def initialize(self):
         if not self.initialized:
@@ -130,7 +137,7 @@ class StateMachine:
             self.t_stop.start()
 
             # engines
-            self.step_stroke = StepMotor(StepMotor.CW)
+            self.step_stroke = Stepmotor(Stepmotor.CCW)
             self.t_step_stroke = Thread(target=self.step_stroke.control)
             self.t_step_stroke.start()
             self.step_drive = StepmotorFahrwerk(StepmotorFahrwerk.CW)
@@ -141,17 +148,20 @@ class StateMachine:
             self.t_servo_grab.start()
 
             # sensors
-            self.ultrasound = UltraSoundSensor()
-            self.t_ultrasound = Thread(target=self.ultrasound_control)
-            self.t_ultrasound.start()
-            self.tof = TOFSensor()
-            self.t_tof = Thread(target=self.tof_control)
-            self.t_tof.start()
+            # self.ultrasound = UltraSoundSensor()
+            # self.t_ultrasound = Thread(target=self.ultrasound_control)
+            # self.t_ultrasound.start()
+            # self.tof = TOFSensor()
+            # self.t_tof = Thread(target=self.tof_control)
+            # self.t_tof.start()
             self.end_switch = EndSwitch()
             self.t_end_switch = Thread(target=self.end_switch_control)
             self.t_end_switch.start()
 
-            self.ready_to_drive()
+            # location
+            self.t_location = Thread(target=self.location_control)
+            self.t_location.start()
+        self.ready_to_drive()
 
     def servo_control(self):
         self.servo_grab.initialize()
@@ -168,20 +178,30 @@ class StateMachine:
         self.servo_grab.stop()
 
     def ultrasound_control(self):
-        while self.ultrasound_wait:
-            time.sleep(0.02)
-        while not self.ultrasound_wait:
-            self.dist_x = self.ultrasound.distance()
-            print(self.dist_x)
-            time.sleep(0.5)
+        pass
+        # while self.ultrasound_wait:
+        #     time.sleep(0.02)
+        # while not self.ultrasound_wait:
+        #     self.dist_x = self.ultrasound.distance()
+        #     print(self.dist_x)
+        #     time.sleep(0.5)
 
     def tof_control(self):
-        while self.tof_wait:
-            time.sleep(0.02)
-        while not self.tof_wait:
-            self.dist_z = self.tof.distance()
-            print(self.dist_z)
-            time.sleep(0.5)
+        pass
+        # while self.tof_wait:
+        #     time.sleep(0.02)
+        # while not self.tof_wait:
+        #     self.dist_z = self.tof.distance()
+        #     print(self.dist_z)
+        #     time.sleep(0.5)
+
+    def location_control(self):
+        while True:
+            while self.location_wait:
+                time.sleep(0.02)
+            while not self.location_wait:
+                print(Locator.loc())
+                time.sleep(0.5)
 
     def end_switch_control(self):
         while True:
@@ -202,34 +222,25 @@ class StateMachine:
         self.notify_controller(event)
 
     def receive_stop_signal(self):
-        while not self.input_main_stop:
-            time.sleep(0.02)
-        event_args = ControllerEvent.event_args_main_stop
-        event = ControllerEvent(event_args)
-        self.notify_controller(event)
-        self.emergency_stop()
-        self.reset_after_stop()
-
-    def smd_drive_forward(self):
-        self.step_drive.set_direction(StepmotorFahrwerk.CCW)
-        self.step_drive.set_state(StepmotorFahrwerk.state['acc'])
+        while True:
+            while not self.input_main_stop:
+                time.sleep(0.02)
+            self.input_main_stop = False
+            event_args = ControllerEvent.event_args_main_stop
+            event = ControllerEvent(event_args)
+            self.notify_controller(event)
+            self.emergency_stop()
+            self.reset_after_stop()
 
     def smd_stop_driving(self):
-        self.step_drive.set_state(StepmotorFahrwerk.state['stop'])
-
-    def sms_drive_down(self):
-        self.step_stroke.set_direction(StepmotorFahrwerk.CW)
-        self.step_stroke.set_state(StepmotorFahrwerk.state['acc'])
-
-    def sms_drive_up(self):
-        self.step_stroke.set_direction(StepmotorFahrwerk.CCW)
-        self.step_stroke.set_state(StepmotorFahrwerk.state['acc'])
+        self.step_drive.request_stop()
 
     def sms_stop_driving(self):
-        self.step_stroke.set_state(StepmotorFahrwerk.state['stop'])
+        self.step_stroke.request_stop()
 
-    def stop_for_cube(self):
-        time.sleep(3)
+    def receive_cube(self):
+        self.step_drive.move_distance(DistanceLookup.DISTANCE_MAP[DistanceLookup.START_TO_CUBE], AccMode.MODE_START)
+        time.sleep(30)
         self.cube_found()
 
     def open_grabber(self):
@@ -250,31 +261,41 @@ class StateMachine:
         self.servo_wait = False
         self.cube_is_set()
 
-    def simulate_ground(self):
-        time.sleep(3)
+    def drive_to_ground(self):
+        self.current_z = Locator.z
+        self.step_stroke.move_distance(self.current_z, Stepmotor.CCW)
+        time.sleep(self.current_z / 1.5)
         self.reached_surface()
 
     def wait_for_touch(self):
+        self.step_drive.move_continuous(AccMode.MODE_START)
         self.end_switch_wait = False
 
     def on_the_ground_woc(self):
+        self.step_stroke.request_stop()
         self.get_cube()
 
     def on_the_ground_wc(self):
+        self.step_stroke.request_stop()
         self.set_cube()
 
-    def on_the_top_woc(self):
-        time.sleep(3)
+    def drive_up_woc(self):
+        distance = self.current_z - Locator.z
+        self.step_stroke.move_distance(distance, Stepmotor.CW)
+        time.sleep(distance / 1.5)
         self.is_up_woc()
 
-    def on_the_top_wc(self):
-        time.sleep(3)
+    def drive_up_wc(self):
+        distance = self.current_z - Locator.z
+        self.step_stroke.move_distance(distance, Stepmotor.CW)
+        time.sleep(distance / 1.5)
         self.is_up_wc()
 
     def finish(self):
         self.shut_down()
 
     def find_target(self):
+        self.step_drive.move_continuous(AccMode.MODE_START)
         event_args = ControllerEvent.event_args_improc_start
         event = ControllerEvent(event_args)
         self.notify_controller(event)
@@ -285,12 +306,16 @@ class StateMachine:
         self.go_down_wc()
 
     def start_location(self):
-        self.ultrasound_wait = False
-        self.tof_wait = False
+        Locator.cube_loc = True
+        self.location_wait = False
+        # self.ultrasound_wait = False
+        # self.tof_wait = False
 
     def stop_location(self):
-        self.ultrasound_wait = True
-        self.tof_wait = True
+        Locator.cube_loc = False
+        self.location_wait = True
+        # self.ultrasound_wait = True
+        # self.tof_wait = True
 
     def adjust_target_location(self):
         pass

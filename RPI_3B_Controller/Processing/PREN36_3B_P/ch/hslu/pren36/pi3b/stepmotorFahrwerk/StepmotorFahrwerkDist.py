@@ -2,6 +2,8 @@ import math
 from time import sleep
 import RPi.GPIO as GPIO
 import numpy as np
+
+from ch.hslu.pren36.pi3b.lookup.Locator import Locator
 from ch.hslu.pren36.pi3b.stepmotorFahrwerk.AccMode import AccMode
 
 
@@ -20,6 +22,7 @@ class StepmotorFahrwerk:
     DIA = 85  # [mm]
     DIA_MOD = DIA / DIA_MOTOR
     PER = DIA_MOTOR * np.pi  # [mm]
+    DPS = (PER / SPR) * DIA_MOD
 
     STATES = {
         'stop': 0,
@@ -52,6 +55,7 @@ class StepmotorFahrwerk:
     current_acc = AccMode.MODE_START[2]
     accelerating = False
     stopping = False
+    stop_req = False
 
     def __init__(self, direction):
         GPIO.setwarnings(False)
@@ -87,14 +91,16 @@ class StepmotorFahrwerk:
             self.steps_stop += 1
         return steps
 
-    def calc_steps(self, distance_cm):
-        print("distance: %d" % distance_cm)
-        if distance_cm == -1:
+    def calc_steps(self, distance_mm):
+        print("distance: %d [mm]" % distance_mm)
+        if distance_mm == -1:
             self.distance = -1
             self.steps = -1
         else:
-            self.distance = distance_cm * 10
-            revs = self.distance / StepmotorFahrwerk.PER
+            self.distance = Locator.real_distance_mm(distance_mm)
+            print("real distance: %f [mm]" % self.distance)
+            revs = (self.distance / StepmotorFahrwerk.PER) / StepmotorFahrwerk.DIA_MOD
+            print("revs: %f" % revs)
             self.steps = int(math.ceil(revs * StepmotorFahrwerk.SPR * StepmotorFahrwerk.STEP_MOD))
             print("steps calc: %d" % self.steps)
         d_acc, s_acc = self.calc_acc(self.delay, self.steps)
@@ -111,13 +117,14 @@ class StepmotorFahrwerk:
 
     def accelerate(self, delay, steps):
         print("accelerate")
-        while delay > self.delay_drive and steps != 0:
+        while delay > self.delay_drive and steps != 0 and not self.stop_req:
             GPIO.output(StepmotorFahrwerk.STEP, GPIO.HIGH)
             sleep(delay)
             GPIO.output(StepmotorFahrwerk.STEP, GPIO.LOW)
             sleep(delay)
             delay /= 1.01
             steps -= 1
+            Locator.update_loc_fahrwerk(StepmotorFahrwerk.DPS)
         return delay
 
     def stop(self, delay, steps):
@@ -130,21 +137,23 @@ class StepmotorFahrwerk:
                 sleep(delay)
                 delay *= 1.01
                 steps -= 1
+                Locator.update_loc_fahrwerk(StepmotorFahrwerk.DPS)
             self.stopping = False
         return delay
 
     def drive(self, delay, step_count):
         print("drive")
         steps = 0
-        while steps < step_count or step_count == -1:
+        while not self.stop_req and (steps < step_count or step_count == -1):
             GPIO.output(StepmotorFahrwerk.STEP, GPIO.HIGH)
             sleep(delay)
             GPIO.output(StepmotorFahrwerk.STEP, GPIO.LOW)
             sleep(delay)
             steps += 1
+            Locator.update_loc_fahrwerk(StepmotorFahrwerk.DPS)
 
-    def move_distance(self, distance_cm, acc_mode):
-        self.calc_steps(distance_cm)
+    def move_distance(self, distance_mm, acc_mode):
+        self.calc_steps(distance_mm)
         self.set_acc_mode(acc_mode[2])
         self.set_state(StepmotorFahrwerk.STATE_ACC)
 
@@ -153,11 +162,13 @@ class StepmotorFahrwerk:
         self.set_acc_mode(acc_mode[2])
         self.set_state(StepmotorFahrwerk.STATE_ACC)
 
+    def request_stop(self):
+        self.stop_req = True
+
     def control(self):
         delay = StepmotorFahrwerk.delay
         while True:
             if self.current_state == StepmotorFahrwerk.STATE_DRIVE:
-                # while self.current_state is not StepmotorFahrwerk.STATE_STOP:
                 self.drive(delay, self.steps_drive)
                 print("set stop")
                 self.set_state(StepmotorFahrwerk.STATE_STOP)
@@ -165,8 +176,11 @@ class StepmotorFahrwerk:
                 if not self.accelerating:
                     self.accelerating = True
                     self.stopping = True
+                    self.stop_req = False
                     delay = self.accelerate(delay, self.steps_acc_stop)
-                    # if delay < StepmotorFahrwerk.delay_drive:
+                    if self.stop_req:
+                        self.set_state(StepmotorFahrwerk.STATE_STOP)
+                        continue
                     print("set drive")
                     self.set_state(StepmotorFahrwerk.STATE_DRIVE)
                     self.accelerating = False

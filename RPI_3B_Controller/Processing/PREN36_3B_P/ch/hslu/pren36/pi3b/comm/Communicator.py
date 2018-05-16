@@ -20,7 +20,7 @@ class Communicator:
             communicator.proc_conn = conn
             communicator.t_wait = Thread(target=communicator.wait, name="Communicator_Wait")
             communicator.t_wait.start()
-            app.run(host="localhost", port=8080)
+            app.run(host="192.168.2.1", port=8080)
             communicator.running = True
 
     def send_signal_to_controller(self, args):

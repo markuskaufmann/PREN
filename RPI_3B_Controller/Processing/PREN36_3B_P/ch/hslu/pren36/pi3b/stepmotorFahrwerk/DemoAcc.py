@@ -13,6 +13,7 @@ class DemoAcc:
     DIA = 85  # [mm]
     DIA_MOD = DIA / DIA_MOTOR
     PER = DIA_MOTOR * np.pi  # [mm]
+    DPS = PER / SPR
 
     steps = 0
     steps_acc = 0
@@ -71,13 +72,13 @@ class DemoAcc:
             self.steps_stop += 1
         return steps
 
-    def move_distance(self, distance_cm):
-        self.control(distance_cm)
+    def move_distance(self, distance_mm):
+        self.control(distance_mm)
 
-    def control(self, distance_cm):
-        distance = distance_cm * 10
+    def control(self, distance_mm):
+        distance = distance_mm
         print("distance: %d mm" % distance)
-        revs = distance / DemoAcc.PER
+        revs = (distance / DemoAcc.PER) / DemoAcc.DIA_MOD
         print(revs)
         self.steps = int(math.ceil(revs * DemoAcc.SPR * DemoAcc.STEP_MOD))
         print("steps: %d" % self.steps)
@@ -104,4 +105,4 @@ class DemoAcc:
 
 if __name__ == '__main__':
     da = DemoAcc()
-    da.move_distance(1)
+    da.move_distance(200)
