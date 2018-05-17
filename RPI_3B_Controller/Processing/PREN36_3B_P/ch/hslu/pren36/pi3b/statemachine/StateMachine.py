@@ -302,6 +302,12 @@ class StateMachine:
         while not self.input_target_found:
             time.sleep(0.02)
         print("Target area found")
+        self.step_drive.request_stop()
+        time.sleep(0.5)
+        distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.CENTER_ROLL_TO_CAMERA]
+        self.step_drive.move_distance(distance, AccMode.MODE_START)
+        time.sleep(distance / 1.5)
+        self.step_drive.request_stop()
         self.target_area_found()
         self.go_down_wc()
 

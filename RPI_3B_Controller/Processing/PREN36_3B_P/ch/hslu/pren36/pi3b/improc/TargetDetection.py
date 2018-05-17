@@ -1,4 +1,8 @@
 from __future__ import print_function
+
+import sys
+import time
+
 import cv2
 import numpy as np
 from imutils.video import FPS
@@ -6,7 +10,7 @@ from imutils.video import WebcamVideoStream
 
 IMAGESIZE_X = 640
 IMAGESIZE_Y = 480
-TARGETRANGE = 15
+TARGETRANGE = 5
 TARGETOFFSET = 0
 
 
@@ -84,3 +88,5 @@ print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
 
 cv2.destroyAllWindows()
 vs.stop()
+time.sleep(1)
+sys.exit()
