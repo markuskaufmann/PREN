@@ -86,13 +86,13 @@ class Stepmotor:
             self.steps_stop += 1
         return steps
 
-    def calc_steps(self, distance_cm):
-        print("distance: %d" % distance_cm)
-        if distance_cm == -1:
+    def calc_steps(self, distance_mm):
+        print("distance: %d" % distance_mm)
+        if distance_mm == -1:
             self.distance = -1
             self.steps = -1
         else:
-            self.distance = distance_cm * 10
+            self.distance = distance_mm
             revs = (self.distance / Stepmotor.PER) / Stepmotor.DIA_MOD
             self.steps = int(math.ceil(revs * Stepmotor.SPR * Stepmotor.STEP_MOD))
             print("steps calc: %d" % self.steps)
@@ -117,7 +117,7 @@ class Stepmotor:
             sleep(delay)
             delay /= 1.1
             steps -= 1
-            Locator.update_loc_hub(Stepmotor.DPS)
+            Locator.update_loc_hub(Stepmotor.DPS, self.current_direction)
         return delay
 
     def stop(self, delay, steps):
@@ -130,7 +130,7 @@ class Stepmotor:
                 sleep(delay)
                 delay *= 1.1
                 steps -= 1
-                Locator.update_loc_hub(Stepmotor.DPS)
+                Locator.update_loc_hub(Stepmotor.DPS, self.current_direction)
             self.stopping = False
         return delay
 
@@ -143,7 +143,7 @@ class Stepmotor:
             GPIO.output(Stepmotor.STEP, GPIO.LOW)
             sleep(delay)
             steps += 1
-            Locator.update_loc_hub(Stepmotor.DPS)
+            Locator.update_loc_hub(Stepmotor.DPS, self.current_direction)
 
     def move_distance(self, distance_mm, direction):
         self.calc_steps(distance_mm)

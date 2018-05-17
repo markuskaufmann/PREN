@@ -28,7 +28,7 @@ class StepmotorFahrwerk:
     steps_acc = 0
     steps_stop = 0
     delay = 1 / 100  # 0.0208 / 2
-    delay_drive = 1 / 700  # 0.0005 / 4096
+    delay_drive = 1 / 600  # 0.0005 / 4096
     state = {'stop': 0,
              'acc': 1,
              'drive': 2}

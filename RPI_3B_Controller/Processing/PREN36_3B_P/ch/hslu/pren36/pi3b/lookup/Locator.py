@@ -8,7 +8,7 @@ class Locator:
     xc = DistanceLookup.DISTANCE_MAP[DistanceLookup.CUBE_START_X]
     z = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_HEIGHT_ABOVE_GROUND]
     zc = DistanceLookup.DISTANCE_MAP[DistanceLookup.CUBE_START_Z]
-    angle = math.radians(DistanceLookup.ANGLE_PITCH_DEGREES)
+    angle = math.radians(DistanceLookup.DISTANCE_MAP[DistanceLookup.ANGLE_PITCH_DEGREES])
     cos = math.cos(angle)
     sin = math.sin(angle)
     cube_loc = False

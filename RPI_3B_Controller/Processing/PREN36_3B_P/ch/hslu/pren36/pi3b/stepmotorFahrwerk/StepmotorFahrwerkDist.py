@@ -19,7 +19,7 @@ class StepmotorFahrwerk:
     DELAY_MOD = 8
     SPS = RPS * (SPR * STEP_MOD)
     DIA_MOTOR = 5  # [mm]
-    DIA = 85  # [mm]
+    DIA = 82  # [mm]
     DIA_MOD = DIA / DIA_MOTOR
     PER = DIA_MOTOR * np.pi  # [mm]
     DPS = (PER / SPR) * DIA_MOD
@@ -113,6 +113,8 @@ class StepmotorFahrwerk:
             self.steps_drive = -1
         else:
             self.steps_drive = self.steps - self.steps_acc_stop * 2
+            if self.steps_drive < 0:
+                self.steps_drive = 0
             print("steps drive: %d" % self.steps_drive)
 
     def accelerate(self, delay, steps):

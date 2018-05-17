@@ -27,7 +27,7 @@ class ControllerStepmotorDist:
 def start():
     if len(sys.argv) == 0:
         print("Missing argument 'direction': [cw=1 (up), ccw=0 (down)]")
-        print("Missing argument 'distance': [int, cm, > 0]")
+        print("Missing argument 'distance': [int, mm, > 0]")
         return
     direction = int(sys.argv[1])
     if direction != 0 and direction != 1:
@@ -35,7 +35,7 @@ def start():
         return
     distance = int(sys.argv[2])
     if distance == 0:
-        print("Wrong value for argument 'distance': [int, cm, > 0]")
+        print("Wrong value for argument 'distance': [int, mm, > 0]")
         return
     csm = ControllerStepmotorDist()
     csm.move_distance(distance, direction)
