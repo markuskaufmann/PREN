@@ -1,4 +1,5 @@
 import time
+from queue import Queue
 from threading import Thread
 from multiprocessing import Process, Pipe
 from pren36.communicator.Communicator import communicator
@@ -15,10 +16,8 @@ class Controller:
     process_prefix = "PREN36_"
     proc_comm = None
     proc_improc = None
-    proc_io = None
     conn_comm_parent, conn_comm_child = Pipe(duplex=True)
     conn_improc_parent, conn_improc_child = Pipe(duplex=True)
-    conn_io_parent, conn_io_child = Pipe(duplex=True)
     thread_prefix = "Controller_"
     t_comm = None
     t_comm_running = True
@@ -33,7 +32,8 @@ class Controller:
     t_tof_running = True
     t_tof_control = False
     imageprocessor = ImageProcessorPiCamera()
-    iolistener = IOListener()
+    rec_queue = Queue()
+    iolistener = IOListener(rec_queue)
     ultrasonic = UltraSoundSensor()
     tof = TOFSensor()
 
@@ -44,9 +44,6 @@ class Controller:
         self.proc_improc = Process(target=self.imageprocessor.start_idle, name=self.process_prefix + "ImageProcessing",
                                    args=(self.conn_improc_child,))
         self.proc_improc.start()
-        self.proc_io = Process(target=self.iolistener.start_idle, name=self.process_prefix + "IOListener",
-                               args=(self.conn_io_child,))
-        self.proc_io.start()
         self.t_comm = Thread(target=self.comm_wait, name=self.thread_prefix + "Communicator")
         self.t_comm.start()
         self.t_improc = Thread(target=self.improc_wait, name=self.thread_prefix + "ImageProcessing")
@@ -71,19 +68,23 @@ class Controller:
             elif communicatorevent.args == CommunicatorEvent.event_args_stop:
                 controller_event_args = ControllerEvent.event_args_main_stop
             event = ControllerEvent(controller_event_args)
-            self.notify_observers([self.conn_io_parent], event)
+            self.io_send(event)
 
     def improc_wait(self):
         while self.t_improc_running:
             imageprocessorevent = self.conn_improc_parent.recv()
             if imageprocessorevent.args == ImageProcessorEvent.event_args_found:
                 event = ControllerEvent(ControllerEvent.event_args_improc_target_found)
-                self.notify_observers([self.conn_comm_parent, self.conn_io_parent], event)
+                self.notify_observers([self.conn_comm_parent], event)
+                self.io_send(event)
+
+    def io_send(self, event):
+        self.iolistener.send_data_to_output(event)
 
     def io_wait(self):
         while self.t_io_running:
-            iolistenerevent = self.conn_io_parent.recv()
-            data = iolistenerevent.args
+            data = self.rec_queue.get()
+            controller_event_args = None
             controller_event_kwargs = None
             connections = []
             if data == IOListener.output_start:

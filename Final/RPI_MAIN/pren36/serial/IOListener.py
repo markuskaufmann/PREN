@@ -3,7 +3,6 @@ from queue import Queue
 from threading import Thread
 
 from pren36.fsm.ControllerEvent import ControllerEvent
-from pren36.serial.IOListenerEvent import IOListenerEvent
 from pren36.serial.SerialConnection import SerialConnection
 
 
