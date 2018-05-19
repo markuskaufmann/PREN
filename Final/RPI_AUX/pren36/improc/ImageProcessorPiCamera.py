@@ -23,6 +23,8 @@ class ImageProcessorPiCamera:
     notify_existing = True
     notify_idle = True
     wait_running = True
+    is_running = False
+    is_stopped = False
 
     def start_idle(self, conn):
         self.proc_conn = conn
@@ -33,13 +35,17 @@ class ImageProcessorPiCamera:
         while self.existing:
             while self.idle:
                 time.sleep(0.02)
+            self.is_running = False
+            self.is_stopped = False
             self.start_capture()
 
     def run(self):
+        self.is_running = True
         self.stopped = False
         self.idle = False
 
     def stop(self):
+        self.is_stopped = True
         self.idle = True
         self.stopped = True
 
@@ -63,9 +69,11 @@ class ImageProcessorPiCamera:
             controllerevent = self.proc_conn.recv()
             args = controllerevent.args
             if args == ControllerEvent.event_args_improc_start:
-                self.run()
+                if not self.is_running:
+                    self.run()
             elif args == ControllerEvent.event_args_main_stop:
-                self.stop()
+                if not self.is_stopped:
+                    self.stop()
 
     def start_capture(self):
         camera = PiCamera()
@@ -107,10 +115,8 @@ class ImageProcessorPiCamera:
 
             if not c_x == -1:
                 print("Target found at: " + str(c_x) + "," + str(c_y))
-                cv2.drawMarker(image, (c_x, c_y), (0, 255, 0), cv2.MARKER_CROSS, 15, cv2.LINE_AA)
                 if self.check_x(c_x):
                     print("Drop location: " + str(c_x) + "," + str(c_y))
-                    cv2.drawMarker(image, (c_x, c_y), (0, 0, 255), cv2.MARKER_TRIANGLE_DOWN, 15, cv2.LINE_AA)
                     self.send_event()
                     self.stop()
 

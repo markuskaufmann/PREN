@@ -52,7 +52,7 @@ class SMFahrwerk:
     delay = delay_drive * DELAY_MOD  # 0.0208 / 2
     current_state = STATE_STOP
     current_direction = CW
-    current_acc = AccelerationMode.MODE_START[2]
+    current_acc = AccelerationMode.MODE_START[1]
     accelerating = False
     stopping = False
     stop_req = False
@@ -78,7 +78,7 @@ class SMFahrwerk:
     def calc_acc(self, delay, steps):
         self.steps_acc = 0
         while delay > self.delay_drive and steps != 0:
-            delay /= 1.01
+            delay /= self.current_acc
             steps -= 1
             self.steps_acc += 1
         return delay, steps
@@ -86,7 +86,7 @@ class SMFahrwerk:
     def calc_stop(self, delay, steps):
         self.steps_stop = 0
         while delay < self.delay and steps != 0:
-            delay *= 1.01
+            delay *= self.current_acc
             steps -= 1
             self.steps_stop += 1
         return steps
@@ -124,7 +124,7 @@ class SMFahrwerk:
             sleep(delay)
             GPIO.output(SMFahrwerk.STEP, GPIO.LOW)
             sleep(delay)
-            delay /= 1.01
+            delay /= self.current_acc
             steps -= 1
             Locator.update_loc_fahrwerk(SMFahrwerk.DPS)
         return delay
@@ -137,7 +137,7 @@ class SMFahrwerk:
                 sleep(delay)
                 GPIO.output(SMFahrwerk.STEP, GPIO.LOW)
                 sleep(delay)
-                delay *= 1.01
+                delay *= self.current_acc
                 steps -= 1
                 Locator.update_loc_fahrwerk(SMFahrwerk.DPS)
             self.stopping = False
@@ -156,12 +156,12 @@ class SMFahrwerk:
 
     def move_distance(self, distance_mm, acc_mode):
         self.calc_steps(distance_mm)
-        self.set_acc_mode(acc_mode[2])
+        self.set_acc_mode(acc_mode[1])
         self.set_state(SMFahrwerk.STATE_ACC)
 
     def move_continuous(self, acc_mode):
         self.calc_steps(-1)
-        self.set_acc_mode(acc_mode[2])
+        self.set_acc_mode(acc_mode[1])
         self.set_state(SMFahrwerk.STATE_ACC)
 
     def request_stop(self):

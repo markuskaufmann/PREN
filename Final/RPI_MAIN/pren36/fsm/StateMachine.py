@@ -78,7 +78,7 @@ class StateMachine:
         self.machine.add_transition(trigger='init', source='off', dest='on', after='initialize')
         self.machine.add_transition(trigger='ready_to_drive', source='on', dest='drive',
                                     before='receive_start_signal', after='receive_cube')
-        self.machine.add_transition(trigger='cube_found', source='drive', dest='stop', after='open_grabber')
+        self.machine.add_transition(trigger='cube_found', source='drive', dest='stop', after='open_grabber_woc')
         self.machine.add_transition(trigger='go_down_woc', source='stop', dest='drive_down', after='drive_to_ground')
         self.machine.add_transition(trigger='reached_surface', source='drive_down', dest='is_down',
                                     after='on_the_ground_woc')
@@ -95,8 +95,7 @@ class StateMachine:
         self.machine.add_transition(trigger='set_cube', source='is_down', dest='set_cube')
         self.machine.add_transition(trigger='cube_is_set', source='set_cube', dest='drive_up', before='stop_location',
                                     after='drive_up_woc')
-        self.machine.add_transition(trigger='is_up_woc', source='drive_up', dest='drive', before='close_grabber',
-                                    after='wait_for_touch')
+        self.machine.add_transition(trigger='is_up_woc', source='drive_up', dest='drive', after='wait_for_touch')
         self.machine.add_transition(trigger='touched_end', source='drive', dest='reach_end', after='finish')
         self.machine.add_transition(trigger='shut_down', source='reach_end', dest='on', before='clean_up',
                                     after='initialize')
@@ -211,36 +210,48 @@ class StateMachine:
         self.step_stroke.request_stop()
 
     def receive_cube(self):
-        self.step_drive.move_distance(DistanceLookup.DISTANCE_MAP[DistanceLookup.START_TO_CUBE], AccelerationMode.MODE_START)
+        self.step_drive.move_distance(DistanceLookup.DISTANCE_MAP[DistanceLookup.START_TO_CUBE],
+                                      AccelerationMode.MODE_START)
         time.sleep(30)
         self.cube_found()
 
     def open_grabber(self):
         self.servo_open = True
         self.servo_wait = False
-        self.go_down_woc()
 
     def close_grabber(self):
         self.servo_close = True
         self.servo_wait = False
+
+    def open_grabber_woc(self):
+        self.open_grabber()
+        self.go_down_woc()
 
     def close_grabber_wc(self):
         self.close_grabber()
         self.has_cube()
 
     def place_cube(self):
-        self.servo_open = True
-        self.servo_wait = False
+        self.open_grabber()
         self.cube_is_set()
 
-    def drive_to_ground(self):
+    def drive_to_ground_woc(self):
         self.current_z = Locator.z
-        self.step_stroke.move_distance(self.current_z, SMHub.CCW)
-        time.sleep(self.current_z / 1.5)
+        self.drive_to_ground(self.current_z)
+
+    def drive_to_ground_wc(self):
+        self.current_z = Locator.z
+        distance = self.current_z - DistanceLookup.DISTANCE_MAP[DistanceLookup.HEIGHT_TARGET_AREA]
+        self.drive_to_ground(distance)
+
+    def drive_to_ground(self, distance_mm):
+        self.step_stroke.move_distance(distance_mm, SMHub.CCW)
+        time.sleep(distance_mm / 1.5)
         self.reached_surface()
 
     def wait_for_touch(self):
-        self.step_drive.move_continuous(AccelerationMode.MODE_START)
+        acc_mode = AccelerationMode.determine_acc_mode(Locator.x)
+        self.step_drive.move_continuous(acc_mode)
         self.end_switch_wait = False
 
     def on_the_ground_woc(self):
@@ -253,6 +264,9 @@ class StateMachine:
 
     def drive_up_woc(self):
         distance = self.current_z - Locator.z
+        min_height = DistanceLookup.DISTANCE_MAP[DistanceLookup.HEIGHT_OBSTACLES] + 15
+        if distance > min_height:
+            distance = min_height
         self.step_stroke.move_distance(distance, SMHub.CW)
         time.sleep(distance / 1.5)
         self.is_up_woc()
@@ -277,7 +291,8 @@ class StateMachine:
         self.step_drive.request_stop()
         time.sleep(0.5)
         distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.CENTER_ROLL_TO_CAMERA]
-        self.step_drive.move_distance(distance, AccelerationMode.MODE_START)
+        acc_mode = AccelerationMode.determine_acc_mode(Locator.x)
+        self.step_drive.move_distance(distance, acc_mode)
         time.sleep(distance / 1.5)
         self.step_drive.request_stop()
         self.target_area_found()

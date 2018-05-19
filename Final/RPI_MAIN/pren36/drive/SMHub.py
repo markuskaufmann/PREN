@@ -11,10 +11,10 @@ class SMHub:
     STEP = 16  # Step GPIO Pin BLUE
     CW = 1  # Clockwise Rotation UP
     CCW = 0  # Counterclockwise Rotation DOWN
-    RPM = 500
+    RPM = 105
     RPS = RPM / 60
     SPR = 200
-    STEP_MOD = 32  # 1/32 Step
+    STEP_MOD = 2  # 1/2 Step
     DELAY_MOD = 8
     SPS = RPS * (SPR * STEP_MOD)
     DIA_MOTOR = 5  # [mm]
@@ -51,6 +51,7 @@ class SMHub:
     delay = delay_drive * DELAY_MOD  # 0.0208 / 2
     current_state = STATE_STOP
     current_direction = CW
+    current_acc = 1.1
     accelerating = False
     stopping = False
     stop_req = False
@@ -73,7 +74,7 @@ class SMHub:
     def calc_acc(self, delay, steps):
         self.steps_acc = 0
         while delay > self.delay_drive and steps != 0:
-            delay /= 1.01
+            delay /= self.current_acc
             steps -= 1
             self.steps_acc += 1
         return delay, steps
@@ -81,7 +82,7 @@ class SMHub:
     def calc_stop(self, delay, steps):
         self.steps_stop = 0
         while delay < self.delay and steps != 0:
-            delay *= 1.01
+            delay *= self.current_acc
             steps -= 1
             self.steps_stop += 1
         return steps
@@ -115,7 +116,7 @@ class SMHub:
             sleep(delay)
             GPIO.output(SMHub.STEP, GPIO.LOW)
             sleep(delay)
-            delay /= 1.1
+            delay /= self.current_acc
             steps -= 1
             Locator.update_loc_hub(SMHub.DPS, self.current_direction)
         return delay
@@ -128,7 +129,7 @@ class SMHub:
                 sleep(delay)
                 GPIO.output(SMHub.STEP, GPIO.LOW)
                 sleep(delay)
-                delay *= 1.1
+                delay *= self.current_acc
                 steps -= 1
                 Locator.update_loc_hub(SMHub.DPS, self.current_direction)
             self.stopping = False

@@ -1,9 +1,8 @@
 import time
 from threading import Thread
 
-from pren36.serial.IOListenerEvent import IOListenerEvent
-from pren36.serial.SerialConnection import SerialConnection
 from pren36.controller.ControllerEvent import ControllerEvent
+from pren36.serial.SerialConnection import SerialConnection
 
 
 class IOListener:

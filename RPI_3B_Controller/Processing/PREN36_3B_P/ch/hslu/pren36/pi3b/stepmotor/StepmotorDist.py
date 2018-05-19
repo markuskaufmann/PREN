@@ -11,10 +11,10 @@ class Stepmotor:
     STEP = 16  # Step GPIO Pin BLUE
     CW = 1  # Clockwise Rotation UP
     CCW = 0  # Counterclockwise Rotation DOWN
-    RPM = 500
+    RPM = 105
     RPS = RPM / 60
     SPR = 200
-    STEP_MOD = 32  # 1/32 Step
+    STEP_MOD = 2  # 1/2 Step
     DELAY_MOD = 8
     SPS = RPS * (SPR * STEP_MOD)
     DIA_MOTOR = 5  # [mm]

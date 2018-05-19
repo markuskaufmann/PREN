@@ -12,13 +12,11 @@ class SerialConnection:
     )
 
     def initialize(self):
-        print("initialize")
         if self.ser.is_open:
             self.ser.close()
         self.ser.open()
 
     def write(self, data):
-        print("write " + str(data))
         data = str(data + '\n')
         encoded = data.encode('raw_unicode_escape')
         self.ser.write(encoded)
