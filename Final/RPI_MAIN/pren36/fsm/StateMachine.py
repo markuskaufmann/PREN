@@ -187,6 +187,7 @@ class StateMachine:
 
     def receive_start_signal(self):
         while not self.input_main_start:
+            print("to be started")
             time.sleep(0.02)
         event_args = ControllerEvent.event_args_main_start
         event = ControllerEvent(event_args)
@@ -210,9 +211,9 @@ class StateMachine:
         self.step_stroke.request_stop()
 
     def receive_cube(self):
-        self.step_drive.move_distance(DistanceLookup.DISTANCE_MAP[DistanceLookup.START_TO_CUBE],
-                                      AccelerationMode.MODE_START)
-        time.sleep(30)
+        distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_TO_CUBE]
+        self.step_drive.move_distance(distance, AccelerationMode.MODE_START)
+        time.sleep(distance / 1.5)
         self.cube_found()
 
     def open_grabber(self):
