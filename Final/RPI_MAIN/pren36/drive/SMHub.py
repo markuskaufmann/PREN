@@ -178,10 +178,8 @@ class SMHub:
 
     def move_proc(self):
         self.moving = True
+        self.stop_req = False
         delay = self.delay
-        if self.stop_req:
-            self.reset_flags()
-            return
         delay = self.accelerate(delay, self.steps_acc_stop)
         if self.stop_req:
             self.reset_flags()

@@ -99,12 +99,11 @@ class StateMachine:
                                     after='drive_up_woc')
         self.machine.add_transition(trigger='is_up_woc', source='drive_up', dest='drive', after='wait_for_touch')
         self.machine.add_transition(trigger='touched_end', source='drive', dest='reach_end', after='finish')
-        self.machine.add_transition(trigger='shut_down', source='reach_end', dest='on', before='clean_up',
+        self.machine.add_transition(trigger='reset', source='reach_end', dest='on', before='clean_up',
                                     after='initialize')
 
         # emergency stop transitions
         self.machine.add_transition(trigger='emergency_stop', source='drive', dest='stop')
-        self.machine.add_transition(trigger='emergency_stop', source='drive_while_waiting', dest='stop')
         self.machine.add_transition(trigger='emergency_stop', source='drive_down', dest='stop')
         self.machine.add_transition(trigger='emergency_stop', source='is_down', dest='stop')
         self.machine.add_transition(trigger='emergency_stop', source='get_cube', dest='stop')
@@ -292,7 +291,7 @@ class StateMachine:
         self.is_up_wc()
 
     def finish(self):
-        self.shut_down()
+        self.reset()
 
     def find_target(self):
         self.step_drive.move_continuous(AccelerationMode.MODE_START)
