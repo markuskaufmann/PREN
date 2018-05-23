@@ -10,7 +10,7 @@ class Servomotor:
     GPIO.setup(GPIO_SERVO, GPIO.OUT)
     p = GPIO.PWM(GPIO_SERVO, 50)  # GPIO 2 als PWM mit 50Hz
 
-    dc_1 = 4.5
+    dc_1 = 4.4
     dc_2 = 8.5
     dc_sleep = 2
 

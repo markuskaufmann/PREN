@@ -41,6 +41,8 @@ class StateMachine:
     t_step_stroke = None
     step_drive = None
     t_step_drive = None
+    step_drive_wait = True
+    step_stroke_wait = True
     servo_grab = None
     t_servo_grab = None
     servo_run = True
@@ -114,6 +116,7 @@ class StateMachine:
     def initialize(self):
         if not self.initialized:
             self.initialized = True
+            self.iolistener.start_idle()
 
             # signals
             self.input_main_start = False
@@ -130,11 +133,11 @@ class StateMachine:
 
             # engines
             self.step_stroke = SMHub(SMHub.CCW)
-            self.t_step_stroke = Thread(target=self.step_stroke.control)
-            self.t_step_stroke.start()
+            # self.t_step_stroke = Thread(target=self.step_stroke.control)
+            # self.t_step_stroke.start()
             self.step_drive = SMFahrwerk(SMFahrwerk.CW)
-            self.t_step_drive = Thread(target=self.step_drive.control)
-            self.t_step_drive.start()
+            # self.t_step_drive = Thread(target=self.step_drive.control)
+            # self.t_step_drive.start()
             self.servo_grab = Servomotor()
             self.t_servo_grab = Thread(target=self.servo_control)
             self.t_servo_grab.start()
@@ -179,6 +182,7 @@ class StateMachine:
                 signal = self.end_switch.signal()
                 if signal == 1:
                     self.end_switch_wait = True
+                    self.step_drive.request_stop()
                     self.touched_end()
                     event_args = ControllerEvent.event_args_main_finish
                     event = ControllerEvent(event_args)
@@ -186,9 +190,9 @@ class StateMachine:
                 time.sleep(0.2)
 
     def receive_start_signal(self):
-        while not self.input_main_start:
-            print("to be started")
-            time.sleep(0.02)
+        # while not self.input_main_start:
+        #     time.sleep(0.02)
+        time.sleep(0.5)
         event_args = ControllerEvent.event_args_main_start
         event = ControllerEvent(event_args)
         self.notify_controller(event)
@@ -212,8 +216,11 @@ class StateMachine:
 
     def receive_cube(self):
         distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_TO_CUBE]
-        self.step_drive.move_distance(distance, AccelerationMode.MODE_START)
-        time.sleep(distance / 1.5)
+        self.step_drive.move_distance(distance, AccelerationMode.MODE_START, self.step_drive_callback)
+        while self.step_drive_wait:
+            time.sleep(0.02)
+        self.step_drive_wait = True
+        # time.sleep((distance / 10) / 1.5)
         self.cube_found()
 
     def open_grabber(self):
@@ -246,8 +253,10 @@ class StateMachine:
         self.drive_to_ground(distance)
 
     def drive_to_ground(self, distance_mm):
-        self.step_stroke.move_distance(distance_mm, SMHub.CCW)
-        time.sleep(distance_mm / 1.5)
+        self.step_stroke.move_distance(distance_mm, SMHub.CCW, self.step_stroke_callback)
+        while self.step_stroke_wait:
+            time.sleep(0.02)
+        self.step_stroke_wait = True
         self.reached_surface()
 
     def wait_for_touch(self):
@@ -268,14 +277,18 @@ class StateMachine:
         min_height = DistanceLookup.DISTANCE_MAP[DistanceLookup.HEIGHT_OBSTACLES] + 15
         if distance > min_height:
             distance = min_height
-        self.step_stroke.move_distance(distance, SMHub.CW)
-        time.sleep(distance / 1.5)
+        self.step_stroke.move_distance(distance, SMHub.CW, self.step_stroke_callback)
+        while self.step_stroke_wait:
+            time.sleep(0.02)
+        self.step_stroke_wait = True
         self.is_up_woc()
 
     def drive_up_wc(self):
         distance = self.current_z - Locator.z
-        self.step_stroke.move_distance(distance, SMHub.CW)
-        time.sleep(distance / 1.5)
+        self.step_stroke.move_distance(distance, SMHub.CW, self.step_stroke_callback)
+        while self.step_stroke_wait:
+            time.sleep(0.02)
+        self.step_stroke_wait = True
         self.is_up_wc()
 
     def finish(self):
@@ -293,8 +306,10 @@ class StateMachine:
         time.sleep(0.5)
         distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.CENTER_ROLL_TO_CAMERA]
         acc_mode = AccelerationMode.determine_acc_mode(Locator.x)
-        self.step_drive.move_distance(distance, acc_mode)
-        time.sleep(distance / 1.5)
+        self.step_drive.move_distance(distance, acc_mode, self.step_drive_callback)
+        while self.step_drive_wait:
+            time.sleep(0.02)
+        self.step_drive_wait = True
         self.step_drive.request_stop()
         self.target_area_found()
         self.go_down_wc()
@@ -319,15 +334,31 @@ class StateMachine:
     def wait(self):
         while self.t_io_wait:
             data = self.rec_queue.get()
-            if data == ControllerEvent.event_args_main_start:
+            data = str(data).strip()
+            if len(data) == 0:
+                continue
+            print("RECEIVED " + data)
+            if data == IOListener.output_start:
                 self.input_main_start = True
-            elif data == ControllerEvent.event_args_main_stop:
+            elif data == IOListener.output_stop:
                 self.input_main_stop = True
-            elif data == ControllerEvent.event_args_improc_target_found:
+            elif data == IOListener.output_improc:
                 self.input_target_found = True
+            # if data == ControllerEvent.event_args_main_start:
+            #     self.input_main_start = True
+            # elif data == ControllerEvent.event_args_main_stop:
+            #     self.input_main_stop = True
+            # elif data == ControllerEvent.event_args_improc_target_found:
+            #     self.input_target_found = True
 
     def send_loc(self):
         while True:
             if self.t_io_loc_running:
                 self.iolistener.send_loc_to_output(Locator.loc_cube())
             time.sleep(0.2)
+
+    def step_drive_callback(self):
+        self.step_drive_wait = False
+
+    def step_stroke_callback(self):
+        self.step_stroke_wait = False

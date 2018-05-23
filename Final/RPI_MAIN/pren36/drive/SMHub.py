@@ -1,4 +1,6 @@
 import math
+import time
+from threading import Thread
 from time import sleep
 import RPi.GPIO as GPIO
 import numpy as np
@@ -7,8 +9,8 @@ from pren36.lookup.Locator import Locator
 
 
 class SMHub:
-    DIR = 21  # Direction GPIO Pin GREEN
-    STEP = 16  # Step GPIO Pin BLUE
+    DIR = 16  # Direction GPIO Pin GREEN
+    STEP = 21  # Step GPIO Pin BLUE
     CW = 1  # Clockwise Rotation UP
     CCW = 0  # Counterclockwise Rotation DOWN
     RPM = 105
@@ -49,12 +51,15 @@ class SMHub:
     steps_acc_stop = 0
     delay_drive = 1 / (SPS * 2)  # 0.0005 / 4096
     delay = delay_drive * DELAY_MOD  # 0.0208 / 2
-    current_state = STATE_STOP
+    # current_state = STATE_STOP
     current_direction = CW
     current_acc = 1.1
-    accelerating = False
-    stopping = False
+    # accelerating = False
+    # stopping = False
     stop_req = False
+    moving = False
+    move_async_idle = True
+    callback = None
 
     def __init__(self, direction):
         GPIO.setwarnings(False)
@@ -62,14 +67,17 @@ class SMHub:
         GPIO.setup(SMHub.DIR, GPIO.OUT)
         GPIO.setup(SMHub.STEP, GPIO.OUT)
         self.set_direction(direction)
+        t_async = Thread(target=self.move_async, name="SMHub")
+        t_async.start()
 
-    def set_state(self, state):
-        self.current_state = state
+    # def set_state(self, state):
+    #     self.current_state = state
 
     def set_direction(self, direction):
-        self.current_direction = direction
-        self.set_state(SMHub.STATE_STOP)
-        GPIO.output(SMHub.DIR, self.current_direction)
+        if not self.moving:
+            self.current_direction = direction
+            # self.set_state(SMFahrwerk.STATE_STOP)
+            GPIO.output(SMHub.DIR, self.current_direction)
 
     def calc_acc(self, delay, steps):
         self.steps_acc = 0
@@ -88,7 +96,7 @@ class SMHub:
         return steps
 
     def calc_steps(self, distance_mm):
-        print("distance: %d" % distance_mm)
+        print("distance: %d [mm]" % distance_mm)
         if distance_mm == -1:
             self.distance = -1
             self.steps = -1
@@ -111,7 +119,9 @@ class SMHub:
 
     def accelerate(self, delay, steps):
         print("accelerate")
-        while delay > self.delay_drive and steps != 0 and not self.stop_req:
+        while delay > self.delay_drive and steps != 0:
+            if self.stop_req:
+                return
             GPIO.output(SMHub.STEP, GPIO.HIGH)
             sleep(delay)
             GPIO.output(SMHub.STEP, GPIO.LOW)
@@ -125,6 +135,8 @@ class SMHub:
         if self.stopping:
             print("stop")
             while delay < self.delay and steps != 0:
+                if self.stop_req:
+                    return
                 GPIO.output(SMHub.STEP, GPIO.HIGH)
                 sleep(delay)
                 GPIO.output(SMHub.STEP, GPIO.LOW)
@@ -138,7 +150,9 @@ class SMHub:
     def drive(self, delay, step_count):
         print("drive")
         steps = 0
-        while not self.stop_req and (steps < step_count or step_count == -1):
+        while steps < step_count or step_count == -1:
+            if self.stop_req:
+                return
             GPIO.output(SMHub.STEP, GPIO.HIGH)
             sleep(delay)
             GPIO.output(SMHub.STEP, GPIO.LOW)
@@ -146,46 +160,82 @@ class SMHub:
             steps += 1
             Locator.update_loc_hub(SMHub.DPS, self.current_direction)
 
-    def move_distance(self, distance_mm, direction):
-        self.calc_steps(distance_mm)
-        self.set_direction(direction)
-        self.set_state(SMHub.STATE_ACC)
+    def move_distance(self, distance_mm, direction, callback):
+        if not self.moving:
+            self.callback = callback
+            self.calc_steps(distance_mm)
+            # self.set_state(SMFahrwerk.STATE_ACC)
+            self.set_direction(direction)
+            self.move_async_idle = False
 
     def move_continuous(self, direction):
-        self.calc_steps(-1)
-        self.set_direction(direction)
-        self.set_state(SMHub.STATE_ACC)
+        if not self.moving:
+            self.callback = None
+            self.calc_steps(-1)
+            # self.set_state(SMFahrwerk.STATE_ACC)
+            self.set_direction(direction)
+            self.move_async_idle = False
+
+    def move_proc(self):
+        self.moving = True
+        delay = self.delay
+        if self.stop_req:
+            self.reset_flags()
+            return
+        delay = self.accelerate(delay, self.steps_acc_stop)
+        if self.stop_req:
+            self.reset_flags()
+            return
+        self.drive(delay, self.steps_drive)
+        if self.stop_req:
+            self.reset_flags()
+            return
+        self.stop(delay, self.steps_acc_stop)
+        self.reset_flags()
+
+    def reset_flags(self):
+        self.stop_req = False
+        self.moving = False
 
     def request_stop(self):
         self.stop_req = True
 
-    def control(self):
-        delay = SMHub.delay
+    def move_async(self):
         while True:
-            if self.current_state == SMHub.STATE_DRIVE:
-                self.drive(delay, self.steps_drive)
-                print("set stop")
-                self.set_state(SMHub.STATE_STOP)
-            elif self.current_state == SMHub.STATE_ACC:
-                if not self.accelerating:
-                    self.accelerating = True
-                    self.stopping = True
-                    self.stop_req = False
-                    delay = self.accelerate(delay, self.steps_acc_stop)
-                    if self.stop_req:
-                        self.set_state(SMHub.STATE_STOP)
-                        continue
-                    print("set drive")
-                    self.set_state(SMHub.STATE_DRIVE)
-                    self.accelerating = False
-            else:
-                self.stop(delay, self.steps_acc_stop)
-                # self.cleanup()
+            while self.move_async_idle:
+                time.sleep(0.02)
+            self.move_proc()
+            if self.callback is not None:
+                self.callback()
+            self.move_async_idle = True
 
-    def cleanup(self):
-        self.distance = 0
-        self.steps = 0
-        self.steps_acc = 0
-        self.steps_drive = 0
-        self.steps_stop = 0
-        self.steps_acc_stop = 0
+    # def control(self):
+    #     delay = SMHub.delay
+    #     while True:
+    #         if self.current_state == SMHub.STATE_DRIVE:
+    #             self.drive(delay, self.steps_drive)
+    #             print("set stop")
+    #             self.set_state(SMHub.STATE_STOP)
+    #         elif self.current_state == SMHub.STATE_ACC:
+    #             if not self.accelerating:
+    #                 self.accelerating = True
+    #                 self.stopping = True
+    #                 self.stop_req = False
+    #                 delay = self.accelerate(delay, self.steps_acc_stop)
+    #                 if self.stop_req:
+    #                     self.set_state(SMHub.STATE_STOP)
+    #                     continue
+    #                 print("set drive")
+    #                 self.set_state(SMHub.STATE_DRIVE)
+    #                 self.accelerating = False
+    #         else:
+    #             self.stop(delay, self.steps_acc_stop)
+    #             # self.cleanup()
+
+    # def cleanup(self):
+    #     self.distance = 0
+    #     self.steps = 0
+    #     self.steps_acc = 0
+    #     self.steps_drive = 0
+    #     self.steps_stop = 0
+    #     self.steps_acc_stop = 0

@@ -11,6 +11,7 @@ class ControllerStepmotorFahrwerkDist:
     sm = None
     t_sm = None
     t_loc = None
+    printable = True
 
     def __init__(self):
         self.sm = StepmotorFahrwerk(1)
@@ -18,7 +19,6 @@ class ControllerStepmotorFahrwerkDist:
         self.t_sm.start()
         self.t_loc = Thread(target=self.print_loc)
         self.t_loc.start()
-        self.print = True
 
     def move_distance(self, distance_mm):
         try:
@@ -27,11 +27,11 @@ class ControllerStepmotorFahrwerkDist:
             elif distance_mm == -1:
                 self.sm.move_continuous(AccMode.MODE_START)
         except KeyboardInterrupt:
-            self.print = False
+            self.printable = False
             self.sm.set_state(StepmotorFahrwerk.STATE_STOP)
 
     def print_loc(self):
-        while self.print:
+        while self.printable:
             print(Locator.loc())
             time.sleep(0.5)
 

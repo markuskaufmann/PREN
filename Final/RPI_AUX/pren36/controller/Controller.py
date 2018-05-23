@@ -38,6 +38,7 @@ class Controller:
     tof = TOFSensor()
 
     def start(self):
+        self.iolistener.start_idle()
         self.proc_comm = Process(target=communicator.run, name=self.process_prefix + "Communicator",
                                  args=(self.conn_comm_child,))
         self.proc_comm.start()
@@ -63,6 +64,7 @@ class Controller:
         while self.t_comm_running:
             communicatorevent = self.conn_comm_parent.recv()
             controller_event_args = None
+            print("commargs: " + str(communicatorevent.args))
             if communicatorevent.args == CommunicatorEvent.event_args_start:
                 controller_event_args = ControllerEvent.event_args_main_start
             elif communicatorevent.args == CommunicatorEvent.event_args_stop:
@@ -87,6 +89,10 @@ class Controller:
             controller_event_args = None
             controller_event_kwargs = None
             connections = []
+            data = str(data).strip()
+            if len(data) == 0:
+                continue
+            print("RECEIVED " + data)
             if data == IOListener.output_start:
                 controller_event_args = ControllerEvent.event_args_main_start
                 connections.append(self.conn_comm_parent)

@@ -15,6 +15,7 @@ def start():
     try:
         sm.initialize()
         if direction == 1:
+            print("open")
             sm.open()
         else:
             sm.close()

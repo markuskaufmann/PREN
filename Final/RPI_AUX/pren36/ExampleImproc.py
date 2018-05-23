@@ -1,11 +1,8 @@
-from threading import Thread
-from picamera.array import PiRGBArray
-from picamera import PiCamera
 import time
 import cv2
 import numpy as np
-from pren36.improc.ImageProcessorEvent import ImageProcessorEvent
-from pren36.controller.ControllerEvent import ControllerEvent
+from picamera import PiCamera
+from picamera.array import PiRGBArray
 
 
 class ImageProcessorPiCamera:
@@ -14,66 +11,10 @@ class ImageProcessorPiCamera:
     TARGETRANGE = 15
     TARGETOFFSET = 0
 
-    proc_conn = None
-    t_notify = None
-    t_wait = None
-    existing = True
-    idle = True
-    stopped = True
-    notify_existing = True
-    notify_idle = True
-    wait_running = True
-    is_running = False
-    is_stopped = False
-
-    def start_idle(self, conn):
-        self.proc_conn = conn
-        self.t_wait = Thread(target=self.wait, name="ImageProcessor_Wait")
-        self.t_wait.start()
-        self.t_notify = Thread(target=self.notify_observers, name="ImageProcessor_Notify")
-        self.t_notify.start()
-        while self.existing:
-            while self.idle:
-                time.sleep(0.02)
-            self.is_running = False
-            self.is_stopped = False
-            self.start_capture()
-
-    def run(self):
-        self.is_running = True
-        self.stopped = False
-        self.idle = False
+    stopped = False
 
     def stop(self):
-        self.is_stopped = True
-        self.idle = True
         self.stopped = True
-
-    def extinguish(self):
-        self.stop()
-        self.existing = False
-
-    def send_event(self):
-        self.notify_idle = False
-
-    def notify_observers(self):
-        while self.notify_existing:
-            while self.notify_idle:
-                time.sleep(0.02)
-            event = ImageProcessorEvent(ImageProcessorEvent.event_args_found)
-            self.proc_conn.send(event)
-            self.notify_idle = True
-
-    def wait(self):
-        while self.wait_running:
-            controllerevent = self.proc_conn.recv()
-            args = controllerevent.args
-            if args == ControllerEvent.event_args_improc_start:
-                if not self.is_running:
-                    self.run()
-            elif args == ControllerEvent.event_args_main_stop:
-                if not self.is_stopped:
-                    self.stop()
 
     def start_capture(self):
         camera = PiCamera()
@@ -119,8 +60,6 @@ class ImageProcessorPiCamera:
                 if self.check_x(c_x):
                     print("Drop location: " + str(c_x) + "," + str(c_y))
                     cv2.drawMarker(image, (c_x, c_y), (0, 0, 255), cv2.MARKER_TRIANGLE_DOWN, 15, cv2.LINE_AA)
-                    self.send_event()
-                    self.stop()
             cv2.imshow("image", image)
 
     def get_center(self, contour):
@@ -149,3 +88,12 @@ class ImageProcessorPiCamera:
                     if center_matches >= 2:
                         return v[0], v[1]
         return -1, -1
+
+
+if __name__ == '__main__':
+    improcpicam = None
+    try:
+        improcpicam = ImageProcessorPiCamera()
+        improcpicam.start_capture()
+    except KeyboardInterrupt:
+        improcpicam.stop()

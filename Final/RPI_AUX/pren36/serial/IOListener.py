@@ -22,12 +22,13 @@ class IOListener:
 
     def start_idle(self):
         self.serial_conn = SerialConnection()
+        self.serial_conn.initialize()
         self.t_read = Thread(target=self.read, name="IOListener_Read")
         self.t_read.start()
-        self.serial_conn.initialize()
 
     def send_data_to_output(self, event):
         data = event.args
+        print("SEND " + str(data))
         if data == ControllerEvent.event_args_main_start:
             data = self.output_start
         elif data == ControllerEvent.event_args_main_stop:
@@ -39,8 +40,11 @@ class IOListener:
     def read(self):
         while self.t_read_running:
             data = self.serial_conn.read()
+            if len(data) == 0:
+                continue
             self.send_event(data)
             time.sleep(0.05)
 
     def send_event(self, args):
+        print("READ " + args)
         self.controller_queue.put(args)
