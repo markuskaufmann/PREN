@@ -4,12 +4,12 @@ import numpy as np
 
 
 class StepmotorFahrwerk:
-    DIR = 26  # Direction GPIO Pin GREEN
-    STEP = 13  # Step GPIO Pin BLUE
+    DIR = 13  # Direction GPIO Pin GREEN
+    STEP = 26  # Step GPIO Pin BLUE
     CW = 1  # Clockwise Rotation
     CCW = 0  # Counterclockwise Rotation
-    SPR = 400  # Steps per Revolution
-    RPM = 200  # Revolutions per minute
+    SPR = 200  # Steps per Revolution
+    RPM = 105  # Revolutions per minute
     STEP_MOD = 2  # 1/2 Step
     DIA = 85
     PER = DIA * np.pi

@@ -28,7 +28,7 @@ class StateMachine:
     t_io = None
     t_io_wait = True
     t_io_loc = None
-    t_io_loc_running = True
+    t_io_loc_running = False
     t_stop = None
 
     # signals
@@ -195,6 +195,8 @@ class StateMachine:
         event_args = ControllerEvent.event_args_main_start
         event = ControllerEvent(event_args)
         self.notify_controller(event)
+        time.sleep(1)
+        self.t_io_loc_running = True
 
     def receive_stop_signal(self):
         while True:
@@ -218,6 +220,7 @@ class StateMachine:
         self.step_drive.move_distance(distance, AccelerationMode.MODE_START, self.step_drive_callback)
         while self.step_drive_wait:
             time.sleep(0.02)
+        time.sleep(1)
         self.step_drive_wait = True
         # time.sleep((distance / 10) / 1.5)
         self.cube_found()
@@ -255,6 +258,7 @@ class StateMachine:
         self.step_stroke.move_distance(distance_mm, SMHub.CCW, self.step_stroke_callback)
         while self.step_stroke_wait:
             time.sleep(0.02)
+        time.sleep(1)
         self.step_stroke_wait = True
         self.reached_surface()
 
@@ -279,6 +283,7 @@ class StateMachine:
         self.step_stroke.move_distance(distance, SMHub.CW, self.step_stroke_callback)
         while self.step_stroke_wait:
             time.sleep(0.02)
+        time.sleep(1)
         self.step_stroke_wait = True
         self.is_up_woc()
 
@@ -287,6 +292,7 @@ class StateMachine:
         self.step_stroke.move_distance(distance, SMHub.CW, self.step_stroke_callback)
         while self.step_stroke_wait:
             time.sleep(0.02)
+        time.sleep(1)
         self.step_stroke_wait = True
         self.is_up_wc()
 
@@ -308,6 +314,7 @@ class StateMachine:
         self.step_drive.move_distance(distance, acc_mode, self.step_drive_callback)
         while self.step_drive_wait:
             time.sleep(0.02)
+        time.sleep(1)
         self.step_drive_wait = True
         self.step_drive.request_stop()
         self.target_area_found()

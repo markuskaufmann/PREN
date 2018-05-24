@@ -8,8 +8,8 @@ from ch.hslu.pren36.pi3b.stepmotorFahrwerk.AccMode import AccMode
 
 
 class StepmotorFahrwerk:
-    DIR = 26  # Direction GPIO Pin GREEN
-    STEP = 13  # Step GPIO Pin BLUE
+    DIR = 13  # Direction GPIO Pin GREEN
+    STEP = 26  # Step GPIO Pin BLUE
     CW = 1  # Clockwise Rotation UP
     CCW = 0  # Counterclockwise Rotation DOWN
     RPM = 105
@@ -126,7 +126,7 @@ class StepmotorFahrwerk:
             sleep(delay)
             delay /= 1.01
             steps -= 1
-            Locator.update_loc_fahrwerk(StepmotorFahrwerk.DPS)
+            # Locator.update_loc_fahrwerk(StepmotorFahrwerk.DPS)
         return delay
 
     def stop(self, delay, steps):
@@ -139,7 +139,7 @@ class StepmotorFahrwerk:
                 sleep(delay)
                 delay *= 1.01
                 steps -= 1
-                Locator.update_loc_fahrwerk(StepmotorFahrwerk.DPS)
+                # Locator.update_loc_fahrwerk(StepmotorFahrwerk.DPS)
             self.stopping = False
         return delay
 
@@ -152,7 +152,7 @@ class StepmotorFahrwerk:
             GPIO.output(StepmotorFahrwerk.STEP, GPIO.LOW)
             sleep(delay)
             steps += 1
-            Locator.update_loc_fahrwerk(StepmotorFahrwerk.DPS)
+            # Locator.update_loc_fahrwerk(StepmotorFahrwerk.DPS)
 
     def move_distance(self, distance_mm, acc_mode):
         self.calc_steps(distance_mm)

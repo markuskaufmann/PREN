@@ -140,7 +140,6 @@ class SMFahrwerk:
         return delay
 
     def stop(self, delay, steps):
-        # if self.stopping:
         print("stop")
         while delay < self.delay and steps != 0:
             if self.stop_req:
@@ -152,7 +151,6 @@ class SMFahrwerk:
             delay *= self.current_acc
             steps -= 1
             Locator.update_loc_fahrwerk(SMFahrwerk.DPS)
-            # self.stopping = False
         return delay
 
     def drive(self, delay, step_count):

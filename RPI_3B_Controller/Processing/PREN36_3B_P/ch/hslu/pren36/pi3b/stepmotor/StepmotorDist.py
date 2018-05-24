@@ -7,18 +7,18 @@ from ch.hslu.pren36.pi3b.lookup.Locator import Locator
 
 
 class Stepmotor:
-    DIR = 21  # Direction GPIO Pin GREEN
-    STEP = 16  # Step GPIO Pin BLUE
+    DIR = 16  # Direction GPIO Pin GREEN
+    STEP = 21  # Step GPIO Pin BLUE
     CW = 1  # Clockwise Rotation UP
     CCW = 0  # Counterclockwise Rotation DOWN
-    RPM = 105
+    RPM = 95
     RPS = RPM / 60
     SPR = 200
     STEP_MOD = 2  # 1/2 Step
     DELAY_MOD = 8
     SPS = RPS * (SPR * STEP_MOD)
     DIA_MOTOR = 5  # [mm]
-    DIA = 15  # [mm]
+    DIA = 14  # [mm]
     DIA_MOD = DIA / DIA_MOTOR
     PER = DIA_MOTOR * np.pi  # [mm]
     DPS = (PER / SPR) * DIA_MOD
@@ -106,6 +106,8 @@ class Stepmotor:
             self.steps_drive = -1
         else:
             self.steps_drive = self.steps - self.steps_acc_stop * 2
+            if self.steps_drive < 0:
+                self.steps_drive = 0
             print("steps drive: %d" % self.steps_drive)
 
     def accelerate(self, delay, steps):
@@ -115,7 +117,7 @@ class Stepmotor:
             sleep(delay)
             GPIO.output(Stepmotor.STEP, GPIO.LOW)
             sleep(delay)
-            delay /= 1.1
+            delay /= 1.01
             steps -= 1
             Locator.update_loc_hub(Stepmotor.DPS, self.current_direction)
         return delay
@@ -128,7 +130,7 @@ class Stepmotor:
                 sleep(delay)
                 GPIO.output(Stepmotor.STEP, GPIO.LOW)
                 sleep(delay)
-                delay *= 1.1
+                delay *= 1.01
                 steps -= 1
                 Locator.update_loc_hub(Stepmotor.DPS, self.current_direction)
             self.stopping = False

@@ -34,19 +34,26 @@ class Launcher:
             self.step_drive.move_distance(distance, AccelerationMode.MODE_START, self.step_drive_callback)
             while self.step_drive_wait:
                 time.sleep(0.02)
+            time.sleep(1)
             self.step_drive_wait = True
-            distance = Locator.z
+            distance = Locator.z - 30
             self.step_stroke.move_distance(distance, SMHub.CCW, self.step_stroke_callback)
             while self.step_stroke_wait:
                 time.sleep(0.02)
+            time.sleep(1)
             self.step_stroke_wait = True
             self.grabber.close()
+            time.sleep(1)
             self.step_stroke.move_distance(distance, SMHub.CW, self.step_stroke_callback)
             while self.step_stroke_wait:
                 time.sleep(0.02)
+            time.sleep(1)
             self.step_stroke_wait = True
             self.step_drive.move_continuous(AccelerationMode.MODE_START)
         except KeyboardInterrupt:
+            self.step_drive.request_stop()
+            self.step_stroke.request_stop()
+            self.grabber.stop()
             sys.exit()
 
     def step_drive_callback(self):

@@ -20,7 +20,7 @@ class SMHub:
     DELAY_MOD = 8
     SPS = RPS * (SPR * STEP_MOD)
     DIA_MOTOR = 5  # [mm]
-    DIA = 15  # [mm]
+    DIA = 14  # [mm]
     DIA_MOD = DIA / DIA_MOTOR
     PER = DIA_MOTOR * np.pi  # [mm]
     DPS = (PER / SPR) * DIA_MOD
@@ -115,6 +115,8 @@ class SMHub:
             self.steps_drive = -1
         else:
             self.steps_drive = self.steps - self.steps_acc_stop * 2
+            if self.steps_drive < 0:
+                self.steps_drive = 0
             print("steps drive: %d" % self.steps_drive)
 
     def accelerate(self, delay, steps):
@@ -132,19 +134,17 @@ class SMHub:
         return delay
 
     def stop(self, delay, steps):
-        if self.stopping:
-            print("stop")
-            while delay < self.delay and steps != 0:
-                if self.stop_req:
-                    return
-                GPIO.output(SMHub.STEP, GPIO.HIGH)
-                sleep(delay)
-                GPIO.output(SMHub.STEP, GPIO.LOW)
-                sleep(delay)
-                delay *= self.current_acc
-                steps -= 1
-                Locator.update_loc_hub(SMHub.DPS, self.current_direction)
-            self.stopping = False
+        print("stop")
+        while delay < self.delay and steps != 0:
+            if self.stop_req:
+                return
+            GPIO.output(SMHub.STEP, GPIO.HIGH)
+            sleep(delay)
+            GPIO.output(SMHub.STEP, GPIO.LOW)
+            sleep(delay)
+            delay *= self.current_acc
+            steps -= 1
+            Locator.update_loc_hub(SMHub.DPS, self.current_direction)
         return delay
 
     def drive(self, delay, step_count):
