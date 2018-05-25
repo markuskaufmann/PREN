@@ -4,9 +4,6 @@ from threading import Thread
 
 from pren36.drive.AccelerationMode import AccelerationMode
 from pren36.drive.SMFahrwerk import SMFahrwerk
-from pren36.drive.SMHub import SMHub
-from pren36.grab.Servomotor import Servomotor
-from pren36.lookup.DistanceLookup import DistanceLookup
 from pren36.lookup.Locator import Locator
 
 
@@ -27,12 +24,14 @@ class Launcher:
         while self.idle:
             time.sleep(0.02)
         try:
+            print("height: " + str(Locator.z))
             self.step_drive.set_direction(self.direction)
             self.step_drive.move_distance(self.distance, AccelerationMode.MODE_START, self.step_drive_callback)
             while self.step_drive_wait:
                 time.sleep(0.02)
             time.sleep(1)
             self.step_drive_wait = True
+            print("height: " + str(Locator.z))
         except KeyboardInterrupt:
             self.step_drive.request_stop()
             sys.exit()

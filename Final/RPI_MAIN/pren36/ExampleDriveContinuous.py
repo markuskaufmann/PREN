@@ -4,10 +4,6 @@ from threading import Thread
 
 from pren36.drive.AccelerationMode import AccelerationMode
 from pren36.drive.SMFahrwerk import SMFahrwerk
-from pren36.drive.SMHub import SMHub
-from pren36.grab.Servomotor import Servomotor
-from pren36.lookup.DistanceLookup import DistanceLookup
-from pren36.lookup.Locator import Locator
 
 
 class Launcher:

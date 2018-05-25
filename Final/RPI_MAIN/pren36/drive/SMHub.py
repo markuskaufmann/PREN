@@ -20,7 +20,7 @@ class SMHub:
     DELAY_MOD = 8
     SPS = RPS * (SPR * STEP_MOD)
     DIA_MOTOR = 5  # [mm]
-    DIA = 14  # [mm]
+    DIA = 15  # [mm]
     DIA_MOD = DIA / DIA_MOTOR
     PER = DIA_MOTOR * np.pi  # [mm]
     DPS = (PER / SPR) * DIA_MOD

@@ -13,6 +13,8 @@ class SerialConnection:
     )
 
     def initialize(self):
+        if self.ser.is_open:
+            self.ser.close()
         self.ser.open()
 
     def write(self, data):

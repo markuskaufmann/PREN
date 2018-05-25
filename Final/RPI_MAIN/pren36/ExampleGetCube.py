@@ -30,13 +30,15 @@ class Launcher:
             time.sleep(0.02)
         try:
             self.grabber.initialize()
+            time.sleep(1)
             distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_TO_CUBE]
             self.step_drive.move_distance(distance, AccelerationMode.MODE_START, self.step_drive_callback)
             while self.step_drive_wait:
                 time.sleep(0.02)
             time.sleep(1)
             self.step_drive_wait = True
-            distance = Locator.z - 30
+            distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_HEIGHT_CUBE]
+            print("height: " + str(distance))
             self.step_stroke.move_distance(distance, SMHub.CCW, self.step_stroke_callback)
             while self.step_stroke_wait:
                 time.sleep(0.02)

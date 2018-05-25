@@ -4,6 +4,7 @@ from pren36.lookup.DistanceLookup import DistanceLookup
 
 
 class Locator:
+    horizontal_x = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_TO_CENTER_ROLL]
     x = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_TO_CENTER_ROLL]
     xc = DistanceLookup.DISTANCE_MAP[DistanceLookup.CUBE_START_X]
     z = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_HEIGHT_ABOVE_GROUND]
@@ -17,6 +18,7 @@ class Locator:
     def update_loc_fahrwerk(step_distance_mm):
         dx = (step_distance_mm * Locator.cos)
         dz = (step_distance_mm * Locator.sin)
+        Locator.horizontal_x += step_distance_mm
         Locator.x += dx
         Locator.z += dz
         if Locator.cube_loc:

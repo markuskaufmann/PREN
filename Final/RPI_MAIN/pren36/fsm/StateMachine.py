@@ -58,7 +58,6 @@ class StateMachine:
     # location
     t_location = None
     location_wait = True
-    current_z = 0
 
     # states
     states = [
@@ -220,7 +219,7 @@ class StateMachine:
         self.step_drive.move_distance(distance, AccelerationMode.MODE_START, self.step_drive_callback)
         while self.step_drive_wait:
             time.sleep(0.02)
-        time.sleep(1)
+        time.sleep(0.5)
         self.step_drive_wait = True
         # time.sleep((distance / 10) / 1.5)
         self.cube_found()
@@ -235,30 +234,33 @@ class StateMachine:
 
     def open_grabber_woc(self):
         self.open_grabber()
+        time.sleep(1)
         self.go_down_woc()
 
     def close_grabber_wc(self):
         self.close_grabber()
+        time.sleep(1)
         self.has_cube()
 
     def place_cube(self):
         self.open_grabber()
+        time.sleep(1)
         self.cube_is_set()
 
     def drive_to_ground_woc(self):
-        self.current_z = Locator.z
-        self.drive_to_ground(self.current_z)
+        distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_HEIGHT_CUBE]
+        self.drive_to_ground(distance)
 
     def drive_to_ground_wc(self):
-        self.current_z = Locator.z
-        distance = self.current_z - DistanceLookup.DISTANCE_MAP[DistanceLookup.HEIGHT_TARGET_AREA]
+        distance = Locator.z - DistanceLookup.get_delta() - \
+                   DistanceLookup.DISTANCE_MAP[DistanceLookup.HEIGHT_TARGET_AREA] - 20
         self.drive_to_ground(distance)
 
     def drive_to_ground(self, distance_mm):
         self.step_stroke.move_distance(distance_mm, SMHub.CCW, self.step_stroke_callback)
         while self.step_stroke_wait:
             time.sleep(0.02)
-        time.sleep(1)
+        time.sleep(0.5)
         self.step_stroke_wait = True
         self.reached_surface()
 
@@ -276,23 +278,20 @@ class StateMachine:
         self.set_cube()
 
     def drive_up_woc(self):
-        distance = self.current_z - Locator.z
-        min_height = DistanceLookup.DISTANCE_MAP[DistanceLookup.HEIGHT_OBSTACLES] + 15
-        if distance > min_height:
-            distance = min_height
+        distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.HEIGHT_WOC]
         self.step_stroke.move_distance(distance, SMHub.CW, self.step_stroke_callback)
         while self.step_stroke_wait:
             time.sleep(0.02)
-        time.sleep(1)
+        time.sleep(0.5)
         self.step_stroke_wait = True
         self.is_up_woc()
 
     def drive_up_wc(self):
-        distance = self.current_z - Locator.z
+        distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.HEIGHT_WOC]
         self.step_stroke.move_distance(distance, SMHub.CW, self.step_stroke_callback)
         while self.step_stroke_wait:
             time.sleep(0.02)
-        time.sleep(1)
+        time.sleep(0.5)
         self.step_stroke_wait = True
         self.is_up_wc()
 
@@ -314,7 +313,7 @@ class StateMachine:
         self.step_drive.move_distance(distance, acc_mode, self.step_drive_callback)
         while self.step_drive_wait:
             time.sleep(0.02)
-        time.sleep(1)
+        time.sleep(0.5)
         self.step_drive_wait = True
         self.step_drive.request_stop()
         self.target_area_found()
