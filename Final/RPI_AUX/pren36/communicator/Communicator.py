@@ -37,11 +37,11 @@ class Communicator:
             if args == ControllerEvent.event_args_main_start:
                 communicator.state = "RESPONSE_PROCESS STARTED"
             elif args == ControllerEvent.event_args_improc_start:
-                communicator.state = "Search for target..."
+                communicator.state = "SEARCH FOR TARGET..."
             elif args == ControllerEvent.event_args_main_stop:
                 communicator.state = "RESPONSE_PROCESS STOPPED"
             elif args == ControllerEvent.event_args_improc_target_found:
-                communicator.state = "Target found"
+                communicator.state = "TARGET FOUND"
             elif args == ControllerEvent.event_args_loc_state:
                 data = controllerevent.kwargs.split(";")
                 communicator.loc_x = data[0]

@@ -1,6 +1,7 @@
 var started = false;
 var locationInterval = 0;
 var reqAnimationInterval = 0;
+var timerInterval = 0;
 var canvas = null;
 var ctx = null;
 var cvWidth = null;
@@ -9,6 +10,8 @@ var realCubeX = null;
 var realCubeZ = null;
 var cubeX = null;
 var cubeZ = null;
+var startTime = null;
+var stopped = false;
 
 $(document).ready(function () {
     $('#btnStart').click(function () {
@@ -37,11 +40,15 @@ function stop() {
 }
 
 function startProcess() {
+    stopped = false;
     sendAjaxRequest("start", startCallback);
+    started = true;
 }
 
 function stopProcess() {
+    stopped = true;
     sendAjaxRequest("stop", stopCallback);
+    started = false;
 }
 
 function updateCoordinates() {
@@ -60,11 +67,14 @@ function sendAjaxRequest(action, callback) {
 function startCallback(response) {
     $('#state').text(response);
     started = true;
+    showState();
+    startTimer();
     updateCoordinates();
 }
 
 function stopCallback(response) {
     $('#state').text(response);
+    stopTimer();
     window.clearInterval(locationInterval);
     window.cancelAnimationFrame(reqAnimationInterval);
     started = false;
@@ -75,11 +85,19 @@ function locationCallback(response) {
         return;
     }
     var coordinates = response.split(";");
-    var x = coordinates[0] / 10;
-    var z = coordinates[1] / 10;
+    var x = parseFloat((coordinates[0] / 10).toString()).toFixed(2);
+    var z = parseFloat((coordinates[1] / 10).toString()).toFixed(2);
     if(coordinates.length === 3) {
-        var state = coordinates[2];
+        var state = coordinates[2].toString();
         $('#state').text(state);
+        if(!stopped) {
+            if(state === "RESPONSE_PROCESS STOPPED") {
+                stopped = true;
+                $('#btnStop').addClass("btnStopActive");
+                $('#btnStart').removeClass("btnStartActive");
+                stopCallback("RESPONSE_PROCESS STOPPED")
+            }
+        }
     }
     if(x !== "None" && z !== "None") {
         $('#posX').text(x);
@@ -87,6 +105,24 @@ function locationCallback(response) {
         realCubeX = x;
         realCubeZ = z;
     }
+}
+
+function showState() {
+    $('#stateContainer').show();
+}
+
+function startTimer() {
+    startTime = Date.now();
+    timerInterval = setInterval(function() {
+        var elapsedTime = Date.now() - startTime;
+        document.getElementById("timer").innerHTML = (elapsedTime / 1000).toFixed(3);
+    }, 100);
+    $('#seconds').text('s');
+    $('#timerContainer').show()
+}
+
+function stopTimer() {
+    window.clearInterval(timerInterval)
 }
 
 function initializeCanvas() {

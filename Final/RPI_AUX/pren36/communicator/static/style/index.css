@@ -1,53 +1,143 @@
 
 body
 {
-    background-color: aliceblue;
+    background-color: white;
     max-width: 100%;
     max-height: 100%;
     text-align: center;
     display: flex;
-    align-items: center;
+    align-items: stretch;
 }
 
 #superContainer
 {
-    margin: 0 auto;
+    position: absolute;
+    top: 20.5vw;
+    left: 0;
     width: 100%;
-    max-height: 90%;
-    padding: 30px;
+    margin: 0 auto;
     background-color: white;
+}
+
+#header
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 20vw;
+    background-color: white;
+    border-bottom: 0.1vw solid black;
+    vertical-align: middle;
+    text-align: center;
+    padding-top: 1vw;
+    margin: 0 auto;
+}
+
+#timerContainer
+{
+    position: absolute;
+    top: 2vw;
+    left: 2vw;
+    z-index: 1;
+    width: 29vw;
+    background-color: white;
+    vertical-align: middle;
+    text-align: center;
+    font-family: "Segoe UI Light", sans-serif;
+    font-size: 1.5vw;
+    color: darkblue;
+    font-weight: bold;
+    font-style: italic;
+    display: none;
+}
+
+#timerContainer img
+{
+    width: 6vw;
+    height: 6vw;
+}
+
+#timerDisplay
+{
+    display: flex;
+    margin: 0 5vw;
+}
+
+#timer
+{
+    flex: 1.4;
+    padding-top: 1vw;
+    text-align: right;
+}
+
+#seconds
+{
+    flex: 1;
+    padding-top: 1vw;
+    padding-left: 1vw;
+    text-align: left;
+}
+
+#logoContainer
+{
+    display: inline;
+    background-color: white;
+    vertical-align: middle;
+    text-align: center;
+    padding-bottom: 1vw;
+}
+
+#logoContainer img
+{
+    width: 15vw;
+    height: 8vw;
 }
 
 #launchContainer
 {
-    width: 100%;
-    height: 200px;
+    display: flex;
+    width: auto;
+    height: auto;
     background-color: white;
     vertical-align: middle;
-    padding-top: 50px;
+    padding-top: 1vw;
+    margin: 1vw 35vw;
 }
 
 #stateContainer
 {
-    width: 100%;
-    height: 30px;
+    position: absolute;
+    top: 2vw;
+    right: 2vw;
+    z-index: 1;
+    width: 29vw;
     background-color: white;
     vertical-align: middle;
+    text-align: center;
+    font-family: "Segoe UI Light", sans-serif;
+    font-size: 1.5vw;
+    color: darkblue;
+    font-weight: bold;
+    font-style: italic;
+    display: none;
+}
+
+#stateContainer img
+{
+    width: 6vw;
+    height: 6vw;
 }
 
 #state
 {
     display: block;
-    font-family: "Segoe UI Light", sans-serif;
-    font-size: 1em;
-    color: darkblue;
-    font-weight: bold;
+    padding-top: 1vw;
 }
 
 #displayContainer
 {
-    width: 100%;
-    padding: 5px;
+    padding: 1vw;
     background-color: white;
     vertical-align: middle;
     display: flex;
@@ -55,7 +145,7 @@ body
 
 #canvasContainer
 {
-    padding: 5px;
+    padding: 0 1vw 1vw;
     background-color: white;
     display: flex;
     align-items: center;
@@ -75,7 +165,7 @@ body
 
 #positionContainer
 {
-    padding: 5px;
+    padding: 1vw;
     background-color: white;
     display: flex;
     align-items: center;
@@ -91,29 +181,28 @@ body
 {
     display: inline-flex;
     font-family: "Segoe UI Light", sans-serif;
-    font-size: 5em;
+    font-size: 5vw;
     color: darkblue;
     font-weight: bold;
-    padding: 40px;
     table-layout: fixed;
 }
 
 .tdlbl
 {
-    width: 25%;
+    width: 5vw;
 }
 
 .tdposition
 {
     text-align: center;
     color: red;
-    width: 50%;
+    width: 20vw;
 }
 
 .tdunit
 {
     text-align: right;
-    width: 25%;
+    width: 5vw;
 }
 
 .flex
@@ -125,17 +214,23 @@ body
 {
     display: inline-block;
     background-color: white;
-    border: solid 3px black;
-    border-radius: 5px;
-    width: 200px;
-    height: 100px;
+    border: solid 0.1vw black;
+    border-radius: 10vw;
     vertical-align: middle;
     text-align: center;
     font-family: "Segoe UI Light", sans-serif;
-    font-size: 3em;
+    font-size: 2vw;
     color: darkblue;
     font-weight: bold;
-    margin: 10px;
+    margin: 1vw;
+    padding: 1vw;
+    flex: 1;
+}
+
+.inlineBtn img
+{
+    width: 4vw;
+    height: 4vw;
 }
 
 .inlineBtn:hover
