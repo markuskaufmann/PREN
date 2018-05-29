@@ -185,12 +185,11 @@ class StateMachine:
                     event_args = ControllerEvent.event_args_main_finish
                     event = ControllerEvent(event_args)
                     self.notify_controller(event)
-                time.sleep(0.2)
+                time.sleep(0.02)
 
     def receive_start_signal(self):
-        # while not self.input_main_start:
-        #     time.sleep(0.02)
-        time.sleep(0.5)
+        while not self.input_main_start:
+            time.sleep(0.02)
         event_args = ControllerEvent.event_args_main_start
         event = ControllerEvent(event_args)
         self.notify_controller(event)
@@ -268,6 +267,10 @@ class StateMachine:
         acc_mode = AccelerationMode.determine_acc_mode(Locator.x)
         self.step_drive.move_continuous(acc_mode)
         self.end_switch_wait = False
+        threshold = DistanceLookup.DISTANCE_MAP[DistanceLookup.THRESHOLD_SLOW_END]
+        while Locator.horizontal_x < threshold:
+            time.sleep(0.02)
+        self.step_drive.slow_end = True
 
     def on_the_ground_woc(self):
         self.step_stroke.request_stop()

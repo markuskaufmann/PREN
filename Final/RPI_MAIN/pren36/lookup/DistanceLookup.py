@@ -28,6 +28,7 @@ class DistanceLookup:
     CUBE_START_X = "cube_start_x"
     CUBE_START_Z = "cube_start_z"
     HEIGHT_WOC = "height_woc"
+    THRESHOLD_SLOW_END = "threshold_slow_end"
 
     # [mm]
     DISTANCE_MAP = {
@@ -54,7 +55,8 @@ class DistanceLookup:
         CENTER_ROLL_TO_CAMERA: 140,
         CUBE_START_X: 650,
         CUBE_START_Z: 0,
-        HEIGHT_WOC: 220
+        HEIGHT_WOC: 220,
+        THRESHOLD_SLOW_END: 3200
     }
 
     HEIGHT_DELTA = {
