@@ -80,7 +80,7 @@ class StateMachine:
         self.machine.add_transition(trigger='ready_to_drive', source='on', dest='drive',
                                     before='receive_start_signal', after='receive_cube')
         self.machine.add_transition(trigger='cube_found', source='drive', dest='stop', after='open_grabber_woc')
-        self.machine.add_transition(trigger='go_down_woc', source='stop', dest='drive_down', after='drive_to_ground')
+        self.machine.add_transition(trigger='go_down_woc', source='stop', dest='drive_down', after='drive_to_ground_woc')
         self.machine.add_transition(trigger='reached_surface', source='drive_down', dest='is_down',
                                     after='on_the_ground_woc')
         self.machine.add_transition(trigger='get_cube', source='is_down', dest='get_cube', after='close_grabber_wc')
@@ -90,7 +90,7 @@ class StateMachine:
                                     after='find_target')
         self.machine.add_transition(trigger='target_area_found', source='drive', dest='stop')
         self.machine.add_transition(trigger='go_down_wc', source='stop', dest='drive_down',
-                                    before='adjust_target_location', after='drive_to_ground')
+                                    before='adjust_target_location', after='drive_to_ground_wc')
         self.machine.add_transition(trigger='reached_surface', source='drive_down', dest='is_down',
                                     after='on_the_ground_wc')
         self.machine.add_transition(trigger='set_cube', source='is_down', dest='set_cube')
@@ -218,9 +218,8 @@ class StateMachine:
         self.step_drive.move_distance(distance, AccelerationMode.MODE_START, self.step_drive_callback)
         while self.step_drive_wait:
             time.sleep(0.02)
-        time.sleep(0.5)
         self.step_drive_wait = True
-        # time.sleep((distance / 10) / 1.5)
+        time.sleep(0.5)
         self.cube_found()
 
     def open_grabber(self):
@@ -251,7 +250,7 @@ class StateMachine:
         self.drive_to_ground(distance)
 
     def drive_to_ground_wc(self):
-        distance = Locator.z - DistanceLookup.get_delta() - \
+        distance = Locator.z - DistanceLookup.get_delta(Locator.horizontal_x) - \
                    DistanceLookup.DISTANCE_MAP[DistanceLookup.HEIGHT_TARGET_AREA] - 20
         self.drive_to_ground(distance)
 
@@ -259,8 +258,8 @@ class StateMachine:
         self.step_stroke.move_distance(distance_mm, SMHub.CCW, self.step_stroke_callback)
         while self.step_stroke_wait:
             time.sleep(0.02)
-        time.sleep(0.5)
         self.step_stroke_wait = True
+        time.sleep(0.5)
         self.reached_surface()
 
     def wait_for_touch(self):
@@ -281,21 +280,21 @@ class StateMachine:
         self.set_cube()
 
     def drive_up_woc(self):
-        distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.HEIGHT_WOC]
+        distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_HEIGHT_ABOVE_GROUND]
         self.step_stroke.move_distance(distance, SMHub.CW, self.step_stroke_callback)
         while self.step_stroke_wait:
             time.sleep(0.02)
-        time.sleep(0.5)
         self.step_stroke_wait = True
+        time.sleep(0.5)
         self.is_up_woc()
 
     def drive_up_wc(self):
-        distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.HEIGHT_WOC]
+        distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_HEIGHT_ABOVE_GROUND]
         self.step_stroke.move_distance(distance, SMHub.CW, self.step_stroke_callback)
         while self.step_stroke_wait:
             time.sleep(0.02)
-        time.sleep(0.5)
         self.step_stroke_wait = True
+        time.sleep(0.5)
         self.is_up_wc()
 
     def finish(self):

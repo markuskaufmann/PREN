@@ -13,7 +13,6 @@ class Launcher:
     reading = True
 
     def __init__(self):
-        self.idle = True
         self.iolistener = IOListener(self.queue)
         self.iolistener.start_idle()
         time.sleep(2)
@@ -26,12 +25,15 @@ class Launcher:
         while self.writing:
             event = ControllerEvent(ControllerEvent.event_args_main_stop)
             self.iolistener.send_data_to_output(event)
-            time.sleep(0.5)
+            print("SENT " + str(event.args))
+            print("Queue size: " + str(self.queue.qsize()))
+            time.sleep(1)
 
     def read(self):
         while self.reading:
             data = self.queue.get()
-            print(data)
+            print("RECEIVED " + str(data))
+            time.sleep(0.5)
 
 
 if __name__ == '__main__':

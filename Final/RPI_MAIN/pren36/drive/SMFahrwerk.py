@@ -14,7 +14,7 @@ class SMFahrwerk:
     STEP = 26  # Step GPIO Pin BLUE
     CW = 1  # Clockwise Rotation UP
     CCW = 0  # Counterclockwise Rotation DOWN
-    RPM_NORMAL = 105
+    RPM_NORMAL = 90
     RPM_END = 40
     RPM = RPM_NORMAL
     RPS = RPM / 60

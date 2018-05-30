@@ -1,7 +1,5 @@
 import math
 
-from pren36.lookup.Locator import Locator
-
 
 class DistanceLookup:
     HEIGHT_START = "height_start"
@@ -27,7 +25,6 @@ class DistanceLookup:
     CENTER_ROLL_TO_CAMERA = "center_roll_to_camera"
     CUBE_START_X = "cube_start_x"
     CUBE_START_Z = "cube_start_z"
-    HEIGHT_WOC = "height_woc"
     THRESHOLD_SLOW_END = "threshold_slow_end"
 
     # [mm]
@@ -38,8 +35,8 @@ class DistanceLookup:
         LENGTH_START_AREA: 500,
         START_TO_CENTER_ROLL: 195,
         START_TO_CUBE: 460,  # 65 - START_TO_CENTER_ROLL
-        START_HEIGHT_ABOVE_GROUND: 200,
-        START_HEIGHT_CUBE: 180,
+        START_HEIGHT_ABOVE_GROUND: 210,
+        START_HEIGHT_CUBE: 190,
         HEIGHT_WITH_CUBE_ABOVE_GROUND: 255,
         LENGTH_START_TO_TARGET_RANGE: 800,
         LENGTH_TARGET_RANGE: 2400,
@@ -55,7 +52,6 @@ class DistanceLookup:
         CENTER_ROLL_TO_CAMERA: 140,
         CUBE_START_X: 650,
         CUBE_START_Z: 0,
-        HEIGHT_WOC: 220,
         THRESHOLD_SLOW_END: 3200
     }
 
@@ -94,6 +90,6 @@ class DistanceLookup:
     }
 
     @staticmethod
-    def get_delta():
-        x = math.floor(Locator.horizontal_x)
+    def get_delta(x):
+        x = math.floor(x)
         return DistanceLookup.HEIGHT_DELTA[x]

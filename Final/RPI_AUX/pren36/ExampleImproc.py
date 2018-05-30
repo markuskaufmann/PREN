@@ -61,6 +61,7 @@ class ImageProcessorPiCamera:
                     print("Drop location: " + str(c_x) + "," + str(c_y))
                     cv2.drawMarker(image, (c_x, c_y), (0, 0, 255), cv2.MARKER_TRIANGLE_DOWN, 15, cv2.LINE_AA)
             cv2.imshow("image", image)
+            cv2.waitKey(1)
 
     def get_center(self, contour):
         moments = cv2.moments(contour)

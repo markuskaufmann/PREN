@@ -2,6 +2,9 @@ import serial
 
 
 class SerialConnection:
+    EOL = bytes('\n', encoding='ascii')
+    LEN_EOL = len(EOL)
+
     ser = serial.Serial(
         port="/dev/serial0",
         baudrate=9600,
@@ -19,9 +22,20 @@ class SerialConnection:
 
     def write(self, data):
         data = str(data + '\n')
-        encoded = data.encode('raw_unicode_escape')
-        self.ser.write(encoded)
+        self.ser.write(bytes(data, encoding='ascii'))
 
     def read(self):
-        data = self.ser.readline()
-        return str(data.decode('utf-8')).strip()
+        data = self.readline()
+        return str(data, encoding='ascii').strip()
+
+    def readline(self):
+        line = bytearray()
+        while True:
+            c = self.ser.read(1)
+            if c:
+                line += c
+                if line[-SerialConnection.LEN_EOL:] == SerialConnection.EOL:
+                    break
+            else:
+                break
+        return bytes(line)

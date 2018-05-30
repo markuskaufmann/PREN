@@ -10,8 +10,8 @@ class Servomotor:
     GPIO.setup(GPIO_SERVO, GPIO.OUT)
     p = GPIO.PWM(GPIO_SERVO, 50)  # GPIO 2 als PWM mit 50Hz
 
-    dc_1 = 8.4
-    dc_2 = 4.6
+    dc_1 = 9.5
+    dc_2 = 5.5
     dc_sleep = 2
 
     # def start(self):
@@ -51,7 +51,7 @@ class Servomotor:
         Servomotor.p.ChangeDutyCycle(0)
 
     def reset(self):
-        Servomotor.p.ChangeDutyCycle(7.5)
+        Servomotor.p.ChangeDutyCycle(Servomotor.dc_1)
         time.sleep(0.1)
         Servomotor.p.ChangeDutyCycle(0)
 

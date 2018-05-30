@@ -61,5 +61,4 @@ class IOListener:
             time.sleep(0.05)
 
     def send_event(self, args):
-        print("READ " + args)
         self.fsm_queue.put(args)

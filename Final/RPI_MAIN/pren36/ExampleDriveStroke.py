@@ -2,7 +2,6 @@ import sys
 import time
 from threading import Thread
 
-from pren36.drive.AccelerationMode import AccelerationMode
 from pren36.drive.SMHub import SMHub
 
 

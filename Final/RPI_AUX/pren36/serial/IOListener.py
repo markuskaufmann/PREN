@@ -28,7 +28,6 @@ class IOListener:
 
     def send_data_to_output(self, event):
         data = event.args
-        print("SEND " + str(data))
         if data == ControllerEvent.event_args_main_start:
             data = self.output_start
         elif data == ControllerEvent.event_args_main_stop:
@@ -46,5 +45,4 @@ class IOListener:
             time.sleep(0.05)
 
     def send_event(self, args):
-        print("READ " + args)
         self.controller_queue.put(args)
