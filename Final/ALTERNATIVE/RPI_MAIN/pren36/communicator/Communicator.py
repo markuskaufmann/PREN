@@ -58,7 +58,7 @@ def stop():
 
 @app.route("/location")
 def location():
-    loc = str(Locator.xc) + ";" + str(Locator.zc)
+    loc = Locator.loc_cube()
     if communicator.state is not None:
         loc += ";" + str(communicator.state)
     return loc

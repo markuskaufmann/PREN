@@ -147,6 +147,8 @@ class StateMachine:
         self.input_main_stop = False
         self.input_target_found = False
 
+        Locator.reset()
+
         self.communicator.update_state("READY")
         self.ready_to_drive()
 

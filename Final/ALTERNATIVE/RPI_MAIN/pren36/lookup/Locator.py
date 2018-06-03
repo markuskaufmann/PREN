@@ -51,3 +51,8 @@ class Locator:
     @staticmethod
     def loc_cube():
         return str(Locator.xc) + ";" + str(Locator.zc)
+
+    @staticmethod
+    def reset():
+        Locator.xc = DistanceLookup.DISTANCE_MAP[DistanceLookup.CUBE_START_X]
+        Locator.zc = DistanceLookup.DISTANCE_MAP[DistanceLookup.CUBE_START_Z]
