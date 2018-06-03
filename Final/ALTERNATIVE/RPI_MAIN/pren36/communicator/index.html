@@ -1,0 +1,57 @@
+<html>
+  <head>
+    <title>PREN 36: BERTA^Z</title>
+    <link rel="stylesheet" type="text/css" href="../../static/style/index.css" />
+    <script src="../../static/script/jquery-3.2.1.min.js"></script>
+    <script src="../../static/script/proc.js"></script>
+  </head>
+  <body>
+    <div id="timerContainer">
+      <img src="../../static/images/time.png" />
+      <div id="timerDisplay">
+        <label id="timer" class="flex"></label>
+        <label id="seconds" class="flex"></label>
+      </div>
+    </div>
+    <div id="stateContainer">
+      <img src="../../static/images/state.png" />
+      <label id="state"></label>
+    </div>
+    <div id="header">
+      <div id="logoContainer">
+        <img src="../../static/images/logo.png" />
+      </div>
+      <div id="launchContainer">
+        <button id="btnStart" class="inlineBtn" title="START">
+          <img src="../../static/images/start.png" />
+        </button>
+        <button id="btnStop" class="inlineBtn" title="STOP">
+          <img src="../../static/images/stop.png" />
+        </button>
+      </div>
+    </div>
+    <div id="superContainer">
+      <div id="displayContainer">
+        <div id="canvasContainer" class="flex">
+          <canvas id="cvsPos" width="740px" height="380px"></canvas>
+        </div>
+        <div id="positionContainer" class="flex">
+          <div id="posSubContainer">
+            <table>
+              <tr>
+                <td class="tdlbl">x: </td>
+                <td id="posX" class="tdposition">-</td>
+                <td class="tdunit">cm</td>
+              </tr>
+              <tr>
+                <td class="tdlbl">z: </td>
+                <td id="posZ" class="tdposition">-</td>
+                <td class="tdunit">cm</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
