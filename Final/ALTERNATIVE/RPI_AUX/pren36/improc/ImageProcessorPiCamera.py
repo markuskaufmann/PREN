@@ -1,14 +1,16 @@
-from threading import Thread
-from picamera.array import PiRGBArray
-from picamera import PiCamera
 import time
+from threading import Thread
+
 import cv2
 import numpy as np
-from pren36.improc.ImageProcessorEvent import ImageProcessorEvent
+
 from pren36.controller.ControllerEvent import ControllerEvent
+from pren36.improc.ImageProcessorEvent import ImageProcessorEvent
+from pren36.improc.PiVideoStream import PiVideoStream
 
 
 class ImageProcessorPiCamera:
+    FRAMERATE = 32
     IMAGESIZE_X = 640
     IMAGESIZE_Y = 480
     TARGETRANGE = 15
@@ -76,22 +78,11 @@ class ImageProcessorPiCamera:
                     self.stop()
 
     def start_capture(self):
-        camera = PiCamera()
-        camera.resolution = (ImageProcessorPiCamera.IMAGESIZE_X, ImageProcessorPiCamera.IMAGESIZE_Y)
-        camera.framerate = 32
-        camera.video_stabilization = True
-        raw_capture = PiRGBArray(camera, size=(ImageProcessorPiCamera.IMAGESIZE_X, ImageProcessorPiCamera.IMAGESIZE_Y))
-        stream = camera.capture_continuous(raw_capture, format="bgr", use_video_port=True)
-        time.sleep(0.1)
-        for frame in stream:
-            if self.stopped:
-                stream.close()
-                raw_capture.close()
-                camera.close()
-                cv2.destroyAllWindows()
-                return
-            image = frame.array
-            raw_capture.truncate(0)
+        pvs = PiVideoStream(resolution=(ImageProcessorPiCamera.IMAGESIZE_X, ImageProcessorPiCamera.IMAGESIZE_Y),
+                            framerate=ImageProcessorPiCamera.FRAMERATE).start()
+        time.sleep(1)
+        while not self.stopped:
+            image = pvs.read()
             operate = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             operate = cv2.GaussianBlur(operate, (3, 3), 0)
             _, operate = cv2.threshold(operate, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
@@ -115,21 +106,21 @@ class ImageProcessorPiCamera:
 
             if not c_x == -1:
                 print("Target found at: " + str(c_x) + "," + str(c_y))
-                cv2.drawMarker(image, (c_x, c_y), (0, 255, 0), cv2.MARKER_CROSS, 15, cv2.LINE_AA)
                 if self.check_x(c_x):
                     print("Drop location: " + str(c_x) + "," + str(c_y))
-                    cv2.drawMarker(image, (c_x, c_y), (0, 0, 255), cv2.MARKER_TRIANGLE_DOWN, 15, cv2.LINE_AA)
                     self.send_event()
                     self.stop()
-            cv2.imshow("image", image)
+        pvs.stop()
 
-    def get_center(self, contour):
+    @staticmethod
+    def get_center(contour):
         moments = cv2.moments(contour)
         center_x = int(moments["m10"] / moments["m00"])
         center_y = int(moments["m01"] / moments["m00"])
         return center_x, center_y
 
-    def check_x(self, loc_x) -> bool:
+    @staticmethod
+    def check_x(loc_x) -> bool:
         upper = ImageProcessorPiCamera.IMAGESIZE_X / 2 + ImageProcessorPiCamera.TARGETRANGE + \
                 ImageProcessorPiCamera.TARGETOFFSET
         lower = ImageProcessorPiCamera.IMAGESIZE_X / 2 - ImageProcessorPiCamera.TARGETRANGE + \
@@ -139,7 +130,8 @@ class ImageProcessorPiCamera:
         else:
             return False
 
-    def find_target(self, centers_array):
+    @staticmethod
+    def find_target(centers_array):
         for i, v in enumerate(centers_array[0:-2]):
             center_matches = 0
             for w in centers_array[i + 1:]:

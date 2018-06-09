@@ -52,7 +52,7 @@ function stopProcess() {
 }
 
 function updateCoordinates() {
-    locationInterval = window.setInterval("sendAjaxRequest(\"location\", locationCallback)", 20);
+    locationInterval = window.setInterval("sendAjaxRequest(\"location\", locationCallback)", 80);
     reqAnimationInterval = window.requestAnimationFrame(animateCube);
 }
 

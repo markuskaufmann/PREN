@@ -20,21 +20,11 @@ class IOListener:
     def start_idle(self):
         self.serial_conn = SerialConnection()
         self.serial_conn.initialize()
-        self.t_write = Thread(target=self.write, name="IOListener_Write")
-        self.t_write.start()
         self.t_read = Thread(target=self.read, name="IOListener_Read")
         self.t_read.start()
 
     def send_data_to_output(self, event):
         self.serial_conn.write(event.args)
-
-    def send_loc_to_output(self, loc):
-        self.loc_queue.put(loc)
-
-    def write(self):
-        while self.t_write_running:
-            data = self.loc_queue.get()
-            self.serial_conn.write(data)
 
     def read(self):
         while self.t_read_running:

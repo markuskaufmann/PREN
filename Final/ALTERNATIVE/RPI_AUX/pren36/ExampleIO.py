@@ -23,7 +23,7 @@ class Launcher:
 
     def write(self):
         while self.writing:
-            event = ControllerEvent(ControllerEvent.event_args_main_stop)
+            event = ControllerEvent(ControllerEvent.event_args_main_start)
             self.iolistener.send_data_to_output(event)
             print("SENT " + str(event.args))
             print("Queue size: " + str(self.queue.qsize()))

@@ -21,21 +21,10 @@ class SerialConnection:
         self.ser.open()
 
     def write(self, data):
-        data = str(data + '\n')
-        self.ser.write(bytes(data, encoding='ascii'))
+        data = str(data) + str('\n')
+        encoded = data.encode('raw_unicode_escape')
+        self.ser.write(encoded)
 
     def read(self):
-        data = self.readline()
-        return str(data, encoding='ascii').strip()
-
-    def readline(self):
-        line = bytearray()
-        while True:
-            c = self.ser.read(1)
-            if c:
-                line += c
-                if line[-SerialConnection.LEN_EOL:] == SerialConnection.EOL:
-                    break
-            else:
-                break
-        return bytes(line)
+        data = self.ser.readline().rstrip()
+        return str(data.decode('utf-8'))

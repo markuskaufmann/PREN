@@ -66,9 +66,7 @@ class Controller:
             data = str(data).strip()
             if len(data) == 0:
                 continue
-            print("RECEIVED " + data)
-            data = int(data)
-            if data == ControllerEvent.event_args_improc_start or data == ControllerEvent.event_args_main_stop:
+            if data == str(ControllerEvent.event_args_improc_start) or data == str(ControllerEvent.event_args_main_stop):
                 event = ControllerEvent(data)
                 connections.append(self.conn_improc_parent)
                 self.notify_observers(connections, event)

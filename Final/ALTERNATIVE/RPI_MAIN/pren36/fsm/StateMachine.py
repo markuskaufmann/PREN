@@ -1,9 +1,12 @@
 import logging
 import time
+from multiprocessing import Process
 from queue import Queue
 from threading import Thread
+
 from transitions import Machine, State
 
+from pren36.communicator.CommObject import CommObject
 from pren36.communicator.Communicator import communicator
 from pren36.communicator.CommunicatorEvent import CommunicatorEvent
 from pren36.drive.AccelerationMode import AccelerationMode
@@ -32,12 +35,12 @@ class StateMachine:
     t_stop = None
 
     # communicator
-    communicator = None
-    t_comm = None
+    comm_object = None
+    proc_comm = None
 
     # signals
-    input_main_start = False
-    input_main_stop = False
+    # input_main_start = False
+    # input_main_stop = False
     input_target_found = False
 
     # engines
@@ -64,7 +67,7 @@ class StateMachine:
         State(name='on'),
         State(name='off'),
         State(name='drive'),
-        State(name='stop', on_enter=['smd_stop_driving']),
+        State(name='stop', on_enter=['smd_stop_driving', 'sms_stop_driving']),
         State(name='drive_down'),
         State(name='is_down'),
         State(name='get_cube'),
@@ -118,11 +121,11 @@ class StateMachine:
             self.iolistener.start_idle()
 
             # communicator
-            self.communicator = communicator
-            self.communicator.set_fsm(self)
-            self.t_comm = Thread(target=self.communicator.run, name="FSM_Communicator")
-            self.t_comm.start()
-            self.communicator.update_state("INITIALIZE")
+            self.comm_object = CommObject()
+            Locator.comm_object = self.comm_object
+            self.proc_comm = Process(target=communicator.run, name="FSM_Communicator",
+                                     args=(self.comm_object,))
+            self.proc_comm.start()
 
             # controller
             self.t_io = Thread(target=self.wait, name="FSM_IOListener_Wait")
@@ -143,13 +146,14 @@ class StateMachine:
             self.t_end_switch.start()
 
         # signals
-        self.input_main_start = False
-        self.input_main_stop = False
+        # self.input_main_start = False
+        # self.input_main_stop = False
         self.input_target_found = False
+        self.comm_object.reset()
 
         Locator.reset()
 
-        self.communicator.update_state("READY")
+        self.comm_object.update_state("READY")
         self.ready_to_drive()
 
     def servo_control(self):
@@ -174,25 +178,29 @@ class StateMachine:
                 signal = self.end_switch.signal()
                 if signal == 1:
                     self.end_switch_wait = True
-                    self.step_drive.request_stop()
-                    self.communicator.update_state("RESPONSE_PROCESS STOPPED")
+                    self.comm_object.update_state("RESPONSE_PROCESS STOPPED")
+                    self.smd_stop_driving()
+                    self.sms_stop_driving()
                     self.touched_end()
                 time.sleep(0.02)
 
     def receive_start_signal(self):
-        while not self.input_main_start:
+        while not self.comm_object.is_started():
             time.sleep(0.02)
-        self.communicator.update_state("RESPONSE_PROCESS STARTED")
+        time.sleep(0.5)
+        self.comm_object.update_state("RESPONSE_PROCESS STARTED")
 
     def receive_stop_signal(self):
         while True:
-            while not self.input_main_stop:
+            while not self.comm_object.is_stopped():
                 time.sleep(0.02)
-            self.input_main_stop = False
+            # self.input_main_stop = False
             event_args = ControllerEvent.event_args_main_stop
             event = ControllerEvent(event_args)
             self.notify_controller(event)
-            self.communicator.update_state("RESPONSE_PROCESS STOPPED")
+            self.comm_object.update_state("RESPONSE_PROCESS STOPPED")
+            self.smd_stop_driving()
+            self.sms_stop_driving()
             self.emergency_stop()
             self.reset_after_stop()
 
@@ -203,7 +211,7 @@ class StateMachine:
         self.step_stroke.request_stop()
 
     def receive_cube(self):
-        self.communicator.update_state("GET CUBE")
+        self.comm_object.update_state("GET CUBE")
         distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_TO_CUBE]
         self.step_drive.move_distance(distance, AccelerationMode.MODE_START, self.step_drive_callback)
         while self.step_drive_wait:
@@ -222,19 +230,19 @@ class StateMachine:
 
     def open_grabber_woc(self):
         self.open_grabber()
-        time.sleep(1)
+        time.sleep(0.5)
         self.go_down_woc()
 
     def close_grabber_wc(self):
         self.close_grabber()
-        time.sleep(1)
-        self.communicator.update_state("CUBE RECEIVED")
+        time.sleep(0.5)
+        self.comm_object.update_state("CUBE RECEIVED")
         self.has_cube()
 
     def place_cube(self):
         self.open_grabber()
         time.sleep(1)
-        self.communicator.update_state("CUBE PLACED")
+        self.comm_object.update_state("CUBE PLACED")
         self.cube_is_set()
 
     def drive_to_ground_woc(self):
@@ -242,7 +250,7 @@ class StateMachine:
         self.drive_to_ground(distance)
 
     def drive_to_ground_wc(self):
-        self.communicator.update_state("SET CUBE")
+        self.comm_object.update_state("SET CUBE")
         distance = Locator.z - DistanceLookup.get_delta(Locator.horizontal_x) - \
                    DistanceLookup.DISTANCE_MAP[DistanceLookup.HEIGHT_TARGET_AREA] - 20
         self.drive_to_ground(distance)
@@ -298,10 +306,10 @@ class StateMachine:
         event_args = ControllerEvent.event_args_improc_start
         event = ControllerEvent(event_args)
         self.notify_controller(event)
-        self.communicator.update_state("START IMPROC")
+        self.comm_object.update_state("START IMPROC")
         while not self.input_target_found:
             time.sleep(0.02)
-        self.communicator.update_state("TARGET AREA FOUND")
+        self.comm_object.update_state("TARGET AREA FOUND")
         self.step_drive.request_stop()
         time.sleep(0.5)
         distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.CENTER_ROLL_TO_CAMERA]
@@ -336,17 +344,15 @@ class StateMachine:
             data = str(data).strip()
             if len(data) == 0:
                 continue
-            print("RECEIVED " + data)
-            data = int(data)
-            if data == ControllerEvent.event_args_improc_target_found:
+            if data == str(ControllerEvent.event_args_improc_target_found):
                 self.input_target_found = True
 
-    def comm_callback(self, event):
-        data = event.args
-        if data == CommunicatorEvent.event_args_start:
-            self.input_main_start = True
-        elif data == CommunicatorEvent.event_args_stop:
-            self.input_main_stop = True
+    # def comm_callback(self, event):
+    #     data = event.args
+    #     if data == CommunicatorEvent.event_args_start:
+    #         self.input_main_start = True
+    #     elif data == CommunicatorEvent.event_args_stop:
+    #         self.input_main_stop = True
 
     def step_drive_callback(self):
         self.step_drive_wait = False

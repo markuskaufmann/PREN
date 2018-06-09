@@ -15,6 +15,7 @@ class Launcher:
     step_stroke = None
     step_stroke_wait = True
     grabber = None
+    conn = None
 
     def __init__(self):
         self.step_drive = SMFahrwerk(SMFahrwerk.CW)
@@ -29,26 +30,26 @@ class Launcher:
             time.sleep(0.02)
         try:
             self.grabber.initialize()
-            # distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_TO_CUBE]
-            # self.step_drive.move_distance(distance, AccelerationMode.MODE_START, self.step_drive_callback)
-            # while self.step_drive_wait:
-            #     time.sleep(0.02)
-            # self.step_drive_wait = True
-            # distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_HEIGHT_CUBE]
-            # print("height: " + str(distance))
-            # self.step_stroke.move_distance(distance, SMHub.CCW, self.step_stroke_callback)
-            # while self.step_stroke_wait:
-            #     time.sleep(0.02)
-            # self.step_stroke_wait = True
+            distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_TO_CUBE]
+            self.step_drive.move_distance(distance, AccelerationMode.MODE_START, self.step_drive_callback)
+            while self.step_drive_wait:
+                time.sleep(0.02)
+            self.step_drive_wait = True
+            distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_HEIGHT_CUBE]
+            print("height: " + str(distance))
+            self.step_stroke.move_distance(distance, SMHub.CCW, self.step_stroke_callback)
+            while self.step_stroke_wait:
+                time.sleep(0.02)
+            self.step_stroke_wait = True
             time.sleep(1)
             self.grabber.close()
             time.sleep(1)
-            # self.step_stroke.move_distance(distance, SMHub.CW, self.step_stroke_callback)
-            # while self.step_stroke_wait:
-            #     time.sleep(0.02)
-            # time.sleep(1)
-            # self.step_stroke_wait = True
-            # self.step_drive.move_continuous(AccelerationMode.MODE_START)
+            self.step_stroke.move_distance(distance, SMHub.CW, self.step_stroke_callback)
+            while self.step_stroke_wait:
+                time.sleep(0.02)
+            time.sleep(1)
+            self.step_stroke_wait = True
+            self.step_drive.move_continuous(AccelerationMode.MODE_START)
         except KeyboardInterrupt:
             self.step_drive.request_stop()
             self.step_stroke.request_stop()
