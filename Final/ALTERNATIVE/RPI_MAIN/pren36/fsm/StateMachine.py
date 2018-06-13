@@ -251,7 +251,7 @@ class StateMachine:
 
     def drive_to_ground_wc(self):
         self.comm_object.update_state("SET CUBE")
-        distance = Locator.z - DistanceLookup.get_delta(Locator.horizontal_x) - \
+        distance = Locator.z - DistanceLookup.get_delta(Locator.x) - \
                    DistanceLookup.DISTANCE_MAP[DistanceLookup.HEIGHT_TARGET_AREA] - 20
         self.drive_to_ground(distance)
 
@@ -268,7 +268,7 @@ class StateMachine:
         self.step_drive.move_continuous(acc_mode)
         self.end_switch_wait = False
         threshold = DistanceLookup.DISTANCE_MAP[DistanceLookup.THRESHOLD_SLOW_END]
-        while Locator.horizontal_x < threshold:
+        while Locator.x < threshold:
             time.sleep(0.02)
         self.step_drive.slow_end = True
 

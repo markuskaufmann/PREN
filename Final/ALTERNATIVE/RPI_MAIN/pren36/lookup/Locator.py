@@ -4,7 +4,6 @@ from pren36.lookup.DistanceLookup import DistanceLookup
 
 
 class Locator:
-    horizontal_x = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_TO_CENTER_ROLL]
     x = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_TO_CENTER_ROLL]
     xc = DistanceLookup.DISTANCE_MAP[DistanceLookup.CUBE_START_X]
     z = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_HEIGHT_ABOVE_GROUND]
@@ -15,10 +14,9 @@ class Locator:
 
     @staticmethod
     def update_loc_fahrwerk(step_distance_mm):
-        (delta, sin, cos) = DistanceLookup.HEIGHT_DELTA[Locator.horizontal_x]
+        (delta, sin, cos) = DistanceLookup.HEIGHT_DELTA[Locator.x]
         dx = (step_distance_mm * cos)
         dz = (step_distance_mm * sin)
-        Locator.horizontal_x += step_distance_mm
         Locator.x += dx
         Locator.z += dz
         if Locator.cube_loc:
@@ -46,7 +44,7 @@ class Locator:
 
     @staticmethod
     def real_distance_mm(x_distance_mm):
-        (delta, sin, cos) = DistanceLookup.HEIGHT_DELTA[Locator.horizontal_x]
+        (delta, sin, cos) = DistanceLookup.HEIGHT_DELTA[Locator.x]
         return x_distance_mm / cos
 
     # @staticmethod
@@ -59,6 +57,8 @@ class Locator:
 
     @staticmethod
     def reset():
+        Locator.x = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_TO_CENTER_ROLL]
+        Locator.z = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_HEIGHT_ABOVE_GROUND]
         Locator.xc = DistanceLookup.DISTANCE_MAP[DistanceLookup.CUBE_START_X]
         Locator.zc = DistanceLookup.DISTANCE_MAP[DistanceLookup.CUBE_START_Z]
         Locator.comm_object.update_loc(Locator.xc, Locator.zc)
