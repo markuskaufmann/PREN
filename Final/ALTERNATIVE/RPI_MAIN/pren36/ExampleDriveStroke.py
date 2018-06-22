@@ -3,6 +3,7 @@ import time
 from threading import Thread
 
 from pren36.drive.SMHub import SMHub
+from pren36.lookup.DistanceLookup import DistanceLookup
 
 
 class Launcher:
@@ -13,6 +14,7 @@ class Launcher:
     distance = None
 
     def __init__(self):
+        DistanceLookup.init_dict()
         self.step_stroke = SMHub(SMHub.CCW)
         self.idle = True
         t_fsm = Thread(target=self.start_idle)

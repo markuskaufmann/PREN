@@ -18,6 +18,7 @@ class Launcher:
     conn = None
 
     def __init__(self):
+        DistanceLookup.init_dict()
         self.step_drive = SMFahrwerk(SMFahrwerk.CW)
         self.step_stroke = SMHub(SMHub.CW)
         self.grabber = Servomotor()
@@ -30,6 +31,7 @@ class Launcher:
             time.sleep(0.02)
         try:
             self.grabber.initialize()
+            time.sleep(3)
             distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_TO_CUBE]
             self.step_drive.move_distance(distance, AccelerationMode.MODE_START, self.step_drive_callback)
             while self.step_drive_wait:
@@ -50,6 +52,8 @@ class Launcher:
             time.sleep(1)
             self.step_stroke_wait = True
             self.step_drive.move_continuous(AccelerationMode.MODE_START)
+            self.grabber.stop()
+            return
         except KeyboardInterrupt:
             self.step_drive.request_stop()
             self.step_stroke.request_stop()

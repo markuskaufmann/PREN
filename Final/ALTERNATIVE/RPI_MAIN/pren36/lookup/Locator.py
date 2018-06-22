@@ -9,12 +9,15 @@ class Locator:
     z = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_HEIGHT_ABOVE_GROUND]
     zc = DistanceLookup.DISTANCE_MAP[DistanceLookup.CUBE_START_Z]
     angle = math.radians(DistanceLookup.DISTANCE_MAP[DistanceLookup.ANGLE_PITCH_DEGREES])
+    cos = math.cos(angle)
+    sin = math.sin(angle)
     cube_loc = False
     comm_object = None
 
     @staticmethod
     def update_loc_fahrwerk(step_distance_mm):
-        (delta, sin, cos) = DistanceLookup.HEIGHT_DELTA[Locator.x]
+        lx = math.floor(Locator.x)
+        (delta, sin, cos) = DistanceLookup.HEIGHT_DELTA[lx]
         dx = (step_distance_mm * cos)
         dz = (step_distance_mm * sin)
         Locator.x += dx
@@ -44,7 +47,8 @@ class Locator:
 
     @staticmethod
     def real_distance_mm(x_distance_mm):
-        (delta, sin, cos) = DistanceLookup.HEIGHT_DELTA[Locator.x]
+        lx = math.floor(Locator.x)
+        (delta, sin, cos) = DistanceLookup.HEIGHT_DELTA[lx]
         return x_distance_mm / cos
 
     # @staticmethod

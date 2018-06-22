@@ -120,6 +120,9 @@ class StateMachine:
             self.initialized = True
             self.iolistener.start_idle()
 
+            # DistanceLookup
+            DistanceLookup.init_dict()
+
             # communicator
             self.comm_object = CommObject()
             Locator.comm_object = self.comm_object

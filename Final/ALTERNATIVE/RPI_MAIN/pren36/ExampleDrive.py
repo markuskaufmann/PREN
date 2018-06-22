@@ -4,6 +4,7 @@ from threading import Thread
 
 from pren36.drive.AccelerationMode import AccelerationMode
 from pren36.drive.SMFahrwerk import SMFahrwerk
+from pren36.lookup.DistanceLookup import DistanceLookup
 from pren36.lookup.Locator import Locator
 
 
@@ -15,6 +16,7 @@ class Launcher:
     distance = None
 
     def __init__(self):
+        DistanceLookup.init_dict()
         self.step_drive = SMFahrwerk(SMFahrwerk.CW)
         self.idle = True
         t_fsm = Thread(target=self.start_idle)

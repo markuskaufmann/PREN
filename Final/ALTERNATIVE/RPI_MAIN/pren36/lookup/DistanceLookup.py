@@ -55,39 +55,56 @@ class DistanceLookup:
         THRESHOLD_SLOW_END: 3200
     }
 
-    HEIGHT_DELTA = {
-        range(0, 540): (30, math.sin(math.radians(4.989)), math.cos(math.radians(4.989))),
-        range(541, 640): (35, math.sin(math.radians(5.039)), math.cos(math.radians(5.039))),
-        range(641, 740): (40, math.sin(math.radians(5.075)), math.cos(math.radians(5.075))),
-        range(741, 840): (45, math.sin(math.radians(5.102)), math.cos(math.radians(5.102))),
-        range(841, 940): (50, math.sin(math.radians(5.124)), math.cos(math.radians(5.124))),
-        range(941, 1040): (60, math.sin(math.radians(4.868)), math.cos(math.radians(4.868))),
-        range(1041, 1140): (64, math.sin(math.radians(4.956)), math.cos(math.radians(4.956))),
-        range(1141, 1240): (68, math.sin(math.radians(5.03)), math.cos(math.radians(5.03))),
-        range(1241, 1340): (70, math.sin(math.radians(5.178)), math.cos(math.radians(5.178))),
-        range(1341, 1440): (71, math.sin(math.radians(5.344)), math.cos(math.radians(5.344))),
-        range(1441, 1540): (71, math.sin(math.radians(5.526)), math.cos(math.radians(5.526))),
-        range(1541, 1640): (71, math.sin(math.radians(5.686)), math.cos(math.radians(5.686))),
-        range(1641, 1740): (72, math.sin(math.radians(5.794)), math.cos(math.radians(5.794))),
-        range(1741, 1840): (70, math.sin(math.radians(5.983)), math.cos(math.radians(5.983))),
-        range(1841, 1940): (68, math.sin(math.radians(6.153)), math.cos(math.radians(6.153))),
-        range(1941, 2040): (62, math.sin(math.radians(6.417)), math.cos(math.radians(6.417))),
-        range(2041, 2140): (57, math.sin(math.radians(6.629)), math.cos(math.radians(6.629))),
-        range(2141, 2240): (50, math.sin(math.radians(6.873)), math.cos(math.radians(6.873))),
-        range(2241, 2340): (40, math.sin(math.radians(7.168)), math.cos(math.radians(7.168))),
-        range(2341, 2440): (33, math.sin(math.radians(7.369)), math.cos(math.radians(7.369))),
-        range(2441, 2540): (20, math.sin(math.radians(7.687)), math.cos(math.radians(7.687))),
-        range(2541, 2640): (10, math.sin(math.radians(7.917)), math.cos(math.radians(7.917))),
-        range(2641, 2740): (0, math.sin(math.radians(8.13)), math.cos(math.radians(8.13))),
-        range(2741, 2840): (0, math.sin(math.radians(8.13)), math.cos(math.radians(8.13))),
-        range(2841, 2940): (0, math.sin(math.radians(8.13)), math.cos(math.radians(8.13))),
-        range(2941, 3040): (0, math.sin(math.radians(8.13)), math.cos(math.radians(8.13))),
-        range(3041, 3140): (0, math.sin(math.radians(8.13)), math.cos(math.radians(8.13))),
-        range(3141, 3240): (0, math.sin(math.radians(8.13)), math.cos(math.radians(8.13))),
-        range(3241, 3340): (0, math.sin(math.radians(8.13)), math.cos(math.radians(8.13))),
-        range(3341, 3440): (0, math.sin(math.radians(8.13)), math.cos(math.radians(8.13))),
-        range(3441, 3540): (0, math.sin(math.radians(8.13)), math.cos(math.radians(8.13)))
-    }
+    HEIGHT_DELTA = {}
+
+    @staticmethod
+    def init_dict():
+        for i in range(0, 541, 1):
+            DistanceLookup.HEIGHT_DELTA[i] = (30, math.sin(math.radians(4.989)), math.cos(math.radians(4.989)))
+        for i in range(541, 641, 1):
+            DistanceLookup.HEIGHT_DELTA[i] = (35, math.sin(math.radians(5.039)), math.cos(math.radians(5.039)))
+        for i in range(641, 741, 1):
+            DistanceLookup.HEIGHT_DELTA[i] = (40, math.sin(math.radians(5.075)), math.cos(math.radians(5.075)))
+        for i in range(741, 841, 1):
+            DistanceLookup.HEIGHT_DELTA[i] = (45, math.sin(math.radians(5.102)), math.cos(math.radians(5.102)))
+        for i in range(841, 941, 1):
+            DistanceLookup.HEIGHT_DELTA[i] = (50, math.sin(math.radians(5.124)), math.cos(math.radians(5.124)))
+        for i in range(941, 1041, 1):
+            DistanceLookup.HEIGHT_DELTA[i] = (60, math.sin(math.radians(4.868)), math.cos(math.radians(4.868)))
+        for i in range(1041, 1141, 1):
+            DistanceLookup.HEIGHT_DELTA[i] = (64, math.sin(math.radians(4.956)), math.cos(math.radians(4.956)))
+        for i in range(1141, 1241, 1):
+            DistanceLookup.HEIGHT_DELTA[i] = (68, math.sin(math.radians(5.03)), math.cos(math.radians(5.03)))
+        for i in range(1241, 1341, 1):
+            DistanceLookup.HEIGHT_DELTA[i] = (70, math.sin(math.radians(5.178)), math.cos(math.radians(5.178)))
+        for i in range(1341, 1441, 1):
+            DistanceLookup.HEIGHT_DELTA[i] = (71, math.sin(math.radians(5.344)), math.cos(math.radians(5.344)))
+        for i in range(1441, 1541, 1):
+            DistanceLookup.HEIGHT_DELTA[i] = (71, math.sin(math.radians(5.526)), math.cos(math.radians(5.526)))
+        for i in range(1541, 1641, 1):
+            DistanceLookup.HEIGHT_DELTA[i] = (71, math.sin(math.radians(5.686)), math.cos(math.radians(5.686)))
+        for i in range(1641, 1741, 1):
+            DistanceLookup.HEIGHT_DELTA[i] = (72, math.sin(math.radians(5.794)), math.cos(math.radians(5.794)))
+        for i in range(1741, 1841, 1):
+            DistanceLookup.HEIGHT_DELTA[i] = (70, math.sin(math.radians(5.983)), math.cos(math.radians(5.983)))
+        for i in range(1841, 1941, 1):
+            DistanceLookup.HEIGHT_DELTA[i] = (68, math.sin(math.radians(6.153)), math.cos(math.radians(6.153)))
+        for i in range(1941, 2041, 1):
+            DistanceLookup.HEIGHT_DELTA[i] = (62, math.sin(math.radians(6.417)), math.cos(math.radians(6.417)))
+        for i in range(2041, 2141, 1):
+            DistanceLookup.HEIGHT_DELTA[i] = (57, math.sin(math.radians(6.629)), math.cos(math.radians(6.629)))
+        for i in range(2141, 2241, 1):
+            DistanceLookup.HEIGHT_DELTA[i] = (50, math.sin(math.radians(6.873)), math.cos(math.radians(6.873)))
+        for i in range(2241, 2341, 1):
+            DistanceLookup.HEIGHT_DELTA[i] = (40, math.sin(math.radians(7.168)), math.cos(math.radians(7.168)))
+        for i in range(2341, 2441, 1):
+            DistanceLookup.HEIGHT_DELTA[i] = (33, math.sin(math.radians(7.369)), math.cos(math.radians(7.369)))
+        for i in range(2441, 2541, 1):
+            DistanceLookup.HEIGHT_DELTA[i] = (20, math.sin(math.radians(7.687)), math.cos(math.radians(7.687)))
+        for i in range(2541, 2641, 1):
+            DistanceLookup.HEIGHT_DELTA[i] = (10, math.sin(math.radians(7.917)), math.cos(math.radians(7.917)))
+        for i in range(2641, 3541, 1):
+            DistanceLookup.HEIGHT_DELTA[i] = (0, math.sin(math.radians(8.13)), math.cos(math.radians(8.13)))
 
     @staticmethod
     def get_delta(x):

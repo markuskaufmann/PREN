@@ -85,8 +85,8 @@ function locationCallback(response) {
         return;
     }
     var coordinates = response.split(";");
-    var x = parseFloat((coordinates[0] / 10).toString()).toFixed(2);
-    var z = parseFloat((coordinates[1] / 10).toString()).toFixed(2);
+    var x = (parseFloat(coordinates[0]) / 10).toFixed(2);
+    var z = (parseFloat(coordinates[1]) / 10).toFixed(2);
     if(coordinates.length === 3) {
         var state = coordinates[2].toString();
         $('#state').text(state);
