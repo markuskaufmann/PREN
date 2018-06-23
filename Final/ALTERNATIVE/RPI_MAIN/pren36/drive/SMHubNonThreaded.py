@@ -6,24 +6,21 @@ import RPi.GPIO as GPIO
 import numpy as np
 
 from pren36.lookup.Locator import Locator
-from pren36.drive.AccelerationMode import AccelerationMode
 
 
-class SMFahrwerk:
-    DIR = 13  # Direction GPIO Pin GREEN
-    STEP = 26  # Step GPIO Pin BLUE
+class SMHub:
+    DIR = 16  # Direction GPIO Pin GREEN
+    STEP = 21  # Step GPIO Pin BLUE
     CW = 1  # Clockwise Rotation UP
     CCW = 0  # Counterclockwise Rotation DOWN
-    RPM_NORMAL = 60
-    RPM_END = 40
-    RPM = RPM_NORMAL
+    RPM = 120
     RPS = RPM / 60
     SPR = 200
     STEP_MOD = 2  # 1/2 Step
     DELAY_MOD = 8
     SPS = RPS * (SPR * STEP_MOD)
     DIA_MOTOR = 5  # [mm]
-    DIA = 82  # [mm]
+    DIA = 15  # [mm]
     DIA_MOD = DIA / DIA_MOTOR
     PER = DIA_MOTOR * np.pi  # [mm]
     DPS = (PER / SPR)  # * DIA_MOD
@@ -56,35 +53,31 @@ class SMFahrwerk:
     delay = delay_drive * DELAY_MOD  # 0.0208 / 2
     # current_state = STATE_STOP
     current_direction = CW
-    current_acc = AccelerationMode.MODE_START[1]
+    current_acc = 1.1
     # accelerating = False
     # stopping = False
     stop_req = False
-    slow_end = False
     moving = False
-    move_async_idle = True
+    # move_async_idle = True
     callback = None
 
     def __init__(self, direction):
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
-        GPIO.setup(SMFahrwerk.DIR, GPIO.OUT)
-        GPIO.setup(SMFahrwerk.STEP, GPIO.OUT)
+        GPIO.setup(SMHub.DIR, GPIO.OUT)
+        GPIO.setup(SMHub.STEP, GPIO.OUT)
         self.set_direction(direction)
-        t_async = Thread(target=self.move_async, name="SMFahrwerk")
-        t_async.start()
+        # t_async = Thread(target=self.move_async, name="SMHub")
+        # t_async.start()
 
     # def set_state(self, state):
     #     self.current_state = state
-
-    def set_acc_mode(self, mode):
-        self.current_acc = mode
 
     def set_direction(self, direction):
         if not self.moving:
             self.current_direction = direction
             # self.set_state(SMFahrwerk.STATE_STOP)
-            GPIO.output(SMFahrwerk.DIR, self.current_direction)
+            GPIO.output(SMHub.DIR, self.current_direction)
 
     def calc_acc(self, delay, steps):
         self.steps_acc = 0
@@ -108,11 +101,9 @@ class SMFahrwerk:
             self.distance = -1
             self.steps = -1
         else:
-            self.distance = Locator.real_distance_mm(distance_mm)
-            print("real distance: %f [mm]" % self.distance)
-            revs = (self.distance / SMFahrwerk.PER) / SMFahrwerk.DIA_MOD
-            print("revs: %f" % revs)
-            self.steps = int(math.ceil(revs * SMFahrwerk.SPR * SMFahrwerk.STEP_MOD))
+            self.distance = distance_mm
+            revs = (self.distance / SMHub.PER) / SMHub.DIA_MOD
+            self.steps = int(math.ceil(revs * SMHub.SPR * SMHub.STEP_MOD))
             print("steps calc: %d" % self.steps)
         d_acc, s_acc = self.calc_acc(self.delay, self.steps)
         s_stop = self.calc_stop(d_acc, self.steps)
@@ -133,13 +124,13 @@ class SMFahrwerk:
         while delay > self.delay_drive and steps != 0:
             if self.stop_req:
                 return
-            GPIO.output(SMFahrwerk.STEP, GPIO.HIGH)
+            GPIO.output(SMHub.STEP, GPIO.HIGH)
             sleep(delay)
-            GPIO.output(SMFahrwerk.STEP, GPIO.LOW)
+            GPIO.output(SMHub.STEP, GPIO.LOW)
             sleep(delay)
             delay /= self.current_acc
             steps -= 1
-            Locator.update_loc_fahrwerk(SMFahrwerk.DPS)
+            Locator.update_loc_hub(SMHub.DPS, self.current_direction)
         return delay
 
     def stop(self, delay, steps):
@@ -147,13 +138,13 @@ class SMFahrwerk:
         while delay < self.delay and steps != 0:
             if self.stop_req:
                 return
-            GPIO.output(SMFahrwerk.STEP, GPIO.HIGH)
+            GPIO.output(SMHub.STEP, GPIO.HIGH)
             sleep(delay)
-            GPIO.output(SMFahrwerk.STEP, GPIO.LOW)
+            GPIO.output(SMHub.STEP, GPIO.LOW)
             sleep(delay)
             delay *= self.current_acc
             steps -= 1
-            Locator.update_loc_fahrwerk(SMFahrwerk.DPS)
+            Locator.update_loc_hub(SMHub.DPS, self.current_direction)
         return delay
 
     def drive(self, delay, step_count):
@@ -162,33 +153,34 @@ class SMFahrwerk:
         while steps < step_count or step_count == -1:
             if self.stop_req:
                 return
-            if self.slow_end:
-                return
-            GPIO.output(SMFahrwerk.STEP, GPIO.HIGH)
+            GPIO.output(SMHub.STEP, GPIO.HIGH)
             sleep(delay)
-            GPIO.output(SMFahrwerk.STEP, GPIO.LOW)
+            GPIO.output(SMHub.STEP, GPIO.LOW)
             sleep(delay)
             steps += 1
-            Locator.update_loc_fahrwerk(SMFahrwerk.DPS)
+            Locator.update_loc_hub(SMHub.DPS, self.current_direction)
 
-    def slow_down_at_end(self):
-        self.slow_end = True
-
-    def move_distance(self, distance_mm, acc_mode, callback):
+    def move_distance(self, distance_mm, direction, callback):
         if not self.moving:
             self.callback = callback
             self.calc_steps(distance_mm)
-            self.set_acc_mode(acc_mode[1])
             # self.set_state(SMFahrwerk.STATE_ACC)
-            self.move_async_idle = False
+            self.set_direction(direction)
+            # self.move_async_idle = False
+            self.move_proc()
+            if self.callback is not None:
+                self.callback()
 
-    def move_continuous(self, acc_mode):
+    def move_continuous(self, direction):
         if not self.moving:
             self.callback = None
             self.calc_steps(-1)
-            self.set_acc_mode(acc_mode[1])
             # self.set_state(SMFahrwerk.STATE_ACC)
-            self.move_async_idle = False
+            self.set_direction(direction)
+            # self.move_async_idle = False
+            self.move_proc()
+            if self.callback is not None:
+                self.callback()
 
     def move_proc(self):
         self.moving = True
@@ -202,67 +194,43 @@ class SMFahrwerk:
         if self.stop_req:
             self.reset_flags()
             return
-        if self.slow_end:
-            self.deccelerate_end(delay)
-            self.reset_flags()
-            return
         self.stop(delay, self.steps_acc_stop)
         self.reset_flags()
 
     def reset_flags(self):
         self.stop_req = False
-        self.slow_end = False
         self.moving = False
 
     def request_stop(self):
         self.stop_req = True
 
-    def move_async(self):
-        while True:
-            while self.move_async_idle:
-                time.sleep(0.02)
-            self.move_proc()
-            if self.callback is not None:
-                self.callback()
-            self.move_async_idle = True
-
-    def deccelerate_end(self, delay):
-        SMFahrwerk.RPM = SMFahrwerk.RPM_END
-        while delay < self.delay_drive:
-            if self.stop_req:
-                return
-            GPIO.output(SMFahrwerk.STEP, GPIO.HIGH)
-            sleep(delay)
-            GPIO.output(SMFahrwerk.STEP, GPIO.LOW)
-            sleep(delay)
-            delay *= self.current_acc
-            Locator.update_loc_fahrwerk(SMFahrwerk.DPS)
-        while not self.stop_req:
-            GPIO.output(SMFahrwerk.STEP, GPIO.HIGH)
-            sleep(delay)
-            GPIO.output(SMFahrwerk.STEP, GPIO.LOW)
-            sleep(delay)
-            Locator.update_loc_fahrwerk(SMFahrwerk.DPS)
-        SMFahrwerk.RPM = SMFahrwerk.RPM_NORMAL
+    # def move_async(self):
+    #     while True:
+    #         while self.move_async_idle:
+    #             time.sleep(0.02)
+    #         self.move_proc()
+    #         if self.callback is not None:
+    #             self.callback()
+    #         self.move_async_idle = True
 
     # def control(self):
-    #     delay = SMFahrwerk.delay
+    #     delay = SMHub.delay
     #     while True:
-    #         if self.current_state == SMFahrwerk.STATE_DRIVE:
+    #         if self.current_state == SMHub.STATE_DRIVE:
     #             self.drive(delay, self.steps_drive)
     #             print("set stop")
-    #             self.set_state(SMFahrwerk.STATE_STOP)
-    #         elif self.current_state == SMFahrwerk.STATE_ACC:
+    #             self.set_state(SMHub.STATE_STOP)
+    #         elif self.current_state == SMHub.STATE_ACC:
     #             if not self.accelerating:
     #                 self.accelerating = True
     #                 self.stopping = True
     #                 self.stop_req = False
     #                 delay = self.accelerate(delay, self.steps_acc_stop)
     #                 if self.stop_req:
-    #                     self.set_state(SMFahrwerk.STATE_STOP)
+    #                     self.set_state(SMHub.STATE_STOP)
     #                     continue
     #                 print("set drive")
-    #                 self.set_state(SMFahrwerk.STATE_DRIVE)
+    #                 self.set_state(SMHub.STATE_DRIVE)
     #                 self.accelerating = False
     #         else:
     #             self.stop(delay, self.steps_acc_stop)

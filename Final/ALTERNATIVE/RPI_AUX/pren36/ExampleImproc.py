@@ -8,7 +8,7 @@ from picamera.array import PiRGBArray
 class ImageProcessorPiCamera:
     IMAGESIZE_X = 640
     IMAGESIZE_Y = 480
-    TARGETRANGE = 15
+    TARGETRANGE = 10
     TARGETOFFSET = 0
 
     stopped = False

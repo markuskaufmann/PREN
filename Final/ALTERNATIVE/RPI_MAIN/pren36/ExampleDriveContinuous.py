@@ -3,7 +3,7 @@ import time
 from threading import Thread
 
 from pren36.drive.AccelerationMode import AccelerationMode
-from pren36.drive.SMFahrwerk import SMFahrwerk
+from pren36.drive.SMFahrwerkNonThreaded import SMFahrwerk
 from pren36.lookup.DistanceLookup import DistanceLookup
 
 

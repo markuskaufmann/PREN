@@ -2,11 +2,13 @@ import sys
 import time
 from threading import Thread
 
+from pren36.communicator.CommObject import CommObject
 from pren36.drive.AccelerationMode import AccelerationMode
-from pren36.drive.SMFahrwerk import SMFahrwerk
-from pren36.drive.SMHub import SMHub
+from pren36.drive.SMFahrwerkNonThreaded import SMFahrwerk
+from pren36.drive.SMHubNonThreaded import SMHub
 from pren36.grab.Servomotor import Servomotor
 from pren36.lookup.DistanceLookup import DistanceLookup
+from pren36.lookup.Locator import Locator
 
 
 class Launcher:
@@ -19,6 +21,10 @@ class Launcher:
 
     def __init__(self):
         DistanceLookup.init_dict()
+        self.comm_object = CommObject()
+        Locator.comm_object = self.comm_object
+        self.comm_object.reset()
+        Locator.reset()
         self.step_drive = SMFahrwerk(SMFahrwerk.CW)
         self.step_stroke = SMHub(SMHub.CW)
         self.grabber = Servomotor()
@@ -31,26 +37,28 @@ class Launcher:
             time.sleep(0.02)
         try:
             self.grabber.initialize()
-            time.sleep(3)
+            # time.sleep(3)
             distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_TO_CUBE]
             self.step_drive.move_distance(distance, AccelerationMode.MODE_START, self.step_drive_callback)
-            while self.step_drive_wait:
-                time.sleep(0.02)
-            self.step_drive_wait = True
+            # while self.step_drive_wait:
+            #     time.sleep(0.02)
+            # self.step_drive_wait = True
             distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_HEIGHT_CUBE]
             print("height: " + str(distance))
             self.step_stroke.move_distance(distance, SMHub.CCW, self.step_stroke_callback)
-            while self.step_stroke_wait:
-                time.sleep(0.02)
-            self.step_stroke_wait = True
-            time.sleep(1)
+            # while self.step_stroke_wait:
+            #     time.sleep(0.02)
+            # self.step_stroke_wait = True
+            # time.sleep(1)
             self.grabber.close()
-            time.sleep(1)
-            self.step_stroke.move_distance(distance, SMHub.CW, self.step_stroke_callback)
-            while self.step_stroke_wait:
-                time.sleep(0.02)
-            time.sleep(1)
-            self.step_stroke_wait = True
+            self.grabber.stop()
+            # time.sleep(1)
+            self.step_stroke.move_distance(DistanceLookup.DISTANCE_MAP[DistanceLookup.START_HEIGHT_ABOVE_GROUND],
+                                           SMHub.CW, self.step_stroke_callback)
+            # while self.step_stroke_wait:
+            #     time.sleep(0.02)
+            # time.sleep(1)
+            # self.step_stroke_wait = True
             self.step_drive.move_continuous(AccelerationMode.MODE_START)
             self.grabber.stop()
             return

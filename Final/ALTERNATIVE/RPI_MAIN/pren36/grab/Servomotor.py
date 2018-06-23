@@ -3,7 +3,7 @@ import time
 
 
 class Servomotor:
-    GPIO_SERVO = 4
+    GPIO_SERVO = 12
 
     GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BCM)
@@ -13,11 +13,11 @@ class Servomotor:
     # dc_1 = 9.5
     # dc_2 = 5.5
     dc_1 = 5.5
-    dc_2 = 9.5
+    dc_2 = 10.5
     dc_sleep = 2
 
-    def initialize(self):
-        Servomotor.p.start(Servomotor.dc_1)
+    def initialize(self, dc):
+        Servomotor.p.start(dc)
         time.sleep(1)
         # Servomotor.p.ChangeDutyCycle(0)
 
@@ -39,4 +39,4 @@ class Servomotor:
     def stop(self):
         # self.reset()
         Servomotor.p.stop()
-        GPIO.cleanup()
+        # GPIO.cleanup()

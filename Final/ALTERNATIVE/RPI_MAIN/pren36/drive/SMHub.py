@@ -13,7 +13,7 @@ class SMHub:
     STEP = 21  # Step GPIO Pin BLUE
     CW = 1  # Clockwise Rotation UP
     CCW = 0  # Counterclockwise Rotation DOWN
-    RPM = 105
+    RPM = 120
     RPS = RPM / 60
     SPR = 200
     STEP_MOD = 2  # 1/2 Step
@@ -23,7 +23,7 @@ class SMHub:
     DIA = 15  # [mm]
     DIA_MOD = DIA / DIA_MOTOR
     PER = DIA_MOTOR * np.pi  # [mm]
-    DPS = (PER / SPR) * DIA_MOD
+    DPS = (PER / SPR)  # * DIA_MOD
 
     STATES = {
         'stop': 0,

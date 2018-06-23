@@ -9,8 +9,8 @@ from transitions import Machine, State
 from pren36.communicator.CommObject import CommObject
 from pren36.communicator.Communicator import communicator
 from pren36.drive.AccelerationMode import AccelerationMode
-from pren36.drive.SMFahrwerk import SMFahrwerk
-from pren36.drive.SMHub import SMHub
+from pren36.drive.SMFahrwerkNonThreaded import SMFahrwerk
+from pren36.drive.SMHubNonThreaded import SMHub
 from pren36.endswitch.EndSwitch import EndSwitch
 from pren36.fsm.ControllerEvent import ControllerEvent
 from pren36.grab.Servomotor import Servomotor
@@ -139,13 +139,14 @@ class StateMachine:
             self.step_stroke = SMHub(SMHub.CCW)
             self.step_drive = SMFahrwerk(SMFahrwerk.CW)
             self.servo_grab = Servomotor()
-            self.t_servo_grab = Thread(target=self.servo_control)
-            self.t_servo_grab.start()
+            self.servo_grab.initialize()
+            # self.t_servo_grab = Thread(target=self.servo_control)
+            # self.t_servo_grab.start()
 
             # sensors
             self.end_switch = EndSwitch()
             self.t_end_switch = Thread(target=self.end_switch_control)
-            self.t_end_switch.start()
+            # self.t_end_switch.start()
 
         # signals
         # self.input_main_start = False
@@ -158,24 +159,24 @@ class StateMachine:
         self.comm_object.update_state("READY")
         self.ready_to_drive()
 
-    def servo_control(self):
-        self.servo_grab.initialize()
-        while self.servo_run:
-            while self.servo_wait:
-                time.sleep(0.02)
-            if self.servo_open:
-                self.servo_grab.open()
-            elif self.servo_close:
-                self.servo_grab.close()
-            self.servo_wait = True
-            self.servo_open = False
-            self.servo_close = False
-        self.servo_grab.stop()
+    # def servo_control(self):
+    #     self.servo_grab.initialize()
+    #     while self.servo_run:
+    #         while self.servo_wait:
+    #             time.sleep(0.02)
+    #         if self.servo_open:
+    #             self.servo_grab.open()
+    #         elif self.servo_close:
+    #             self.servo_grab.close()
+    #         self.servo_wait = True
+    #         self.servo_open = False
+    #         self.servo_close = False
+    #     self.servo_grab.stop()
 
     def end_switch_control(self):
         while True:
             while self.end_switch_wait:
-                time.sleep(0.02)
+                time.sleep(0.05)
             while not self.end_switch_wait:
                 signal = self.end_switch.signal()
                 if signal == 1:
@@ -184,18 +185,17 @@ class StateMachine:
                     self.smd_stop_driving()
                     self.sms_stop_driving()
                     self.touched_end()
-                time.sleep(0.02)
+                time.sleep(0.05)
 
     def receive_start_signal(self):
         while not self.comm_object.is_started():
             time.sleep(0.02)
-        time.sleep(0.5)
         self.comm_object.update_state("RESPONSE_PROCESS STARTED")
 
     def receive_stop_signal(self):
         while True:
             while not self.comm_object.is_stopped():
-                time.sleep(0.02)
+                time.sleep(1)
             # self.input_main_stop = False
             event_args = ControllerEvent.event_args_main_stop
             event = ControllerEvent(event_args)
@@ -215,35 +215,33 @@ class StateMachine:
     def receive_cube(self):
         self.comm_object.update_state("GET CUBE")
         distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_TO_CUBE]
-        self.step_drive.move_distance(distance, AccelerationMode.MODE_START, self.step_drive_callback)
-        while self.step_drive_wait:
-            time.sleep(0.02)
-        self.step_drive_wait = True
-        time.sleep(0.5)
+        self.step_drive.move_distance(distance, AccelerationMode.MODE_START, None)
+        # while self.step_drive_wait:
+        #     time.sleep(0.02)
+        # self.step_drive_wait = True
         self.cube_found()
 
     def open_grabber(self):
-        self.servo_open = True
-        self.servo_wait = False
+        # self.servo_open = True
+        # self.servo_wait = False
+        self.servo_grab.open()
 
     def close_grabber(self):
-        self.servo_close = True
-        self.servo_wait = False
+        # self.servo_close = True
+        # self.servo_wait = False
+        self.servo_grab.close()
 
     def open_grabber_woc(self):
         self.open_grabber()
-        time.sleep(0.5)
         self.go_down_woc()
 
     def close_grabber_wc(self):
         self.close_grabber()
-        time.sleep(0.5)
         self.comm_object.update_state("CUBE RECEIVED")
         self.has_cube()
 
     def place_cube(self):
         self.open_grabber()
-        time.sleep(1)
         self.comm_object.update_state("CUBE PLACED")
         self.cube_is_set()
 
@@ -258,21 +256,21 @@ class StateMachine:
         self.drive_to_ground(distance)
 
     def drive_to_ground(self, distance_mm):
-        self.step_stroke.move_distance(distance_mm, SMHub.CCW, self.step_stroke_callback)
-        while self.step_stroke_wait:
-            time.sleep(0.02)
-        self.step_stroke_wait = True
-        time.sleep(0.5)
+        self.step_stroke.move_distance(distance_mm, SMHub.CCW, None)
+        # while self.step_stroke_wait:
+        #     time.sleep(0.02)
+        # self.step_stroke_wait = True
         self.reached_surface()
 
     def wait_for_touch(self):
+        self.t_end_switch.start()
         acc_mode = AccelerationMode.determine_acc_mode(Locator.x)
-        self.step_drive.move_continuous(acc_mode)
         self.end_switch_wait = False
-        threshold = DistanceLookup.DISTANCE_MAP[DistanceLookup.THRESHOLD_SLOW_END]
-        while Locator.x < threshold:
-            time.sleep(0.02)
-        self.step_drive.slow_end = True
+        self.step_drive.move_continuous(acc_mode)
+        # threshold = DistanceLookup.DISTANCE_MAP[DistanceLookup.THRESHOLD_SLOW_END]
+        # while Locator.x < threshold:
+        #     time.sleep(0.02)
+        # self.step_drive.slow_end = True
 
     def on_the_ground_woc(self):
         self.step_stroke.request_stop()
@@ -284,43 +282,44 @@ class StateMachine:
 
     def drive_up_woc(self):
         distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_HEIGHT_ABOVE_GROUND]
-        self.step_stroke.move_distance(distance, SMHub.CW, self.step_stroke_callback)
-        while self.step_stroke_wait:
-            time.sleep(0.02)
-        self.step_stroke_wait = True
-        time.sleep(0.5)
+        self.step_stroke.move_distance(distance, SMHub.CW, None)
+        # while self.step_stroke_wait:
+        #     time.sleep(0.02)
+        # self.step_stroke_wait = True
         self.is_up_woc()
 
     def drive_up_wc(self):
         distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_HEIGHT_ABOVE_GROUND]
-        self.step_stroke.move_distance(distance, SMHub.CW, self.step_stroke_callback)
-        while self.step_stroke_wait:
-            time.sleep(0.02)
-        self.step_stroke_wait = True
-        time.sleep(0.5)
+        self.step_stroke.move_distance(distance, SMHub.CW, None)
+        # while self.step_stroke_wait:
+        #     time.sleep(0.02)
+        # self.step_stroke_wait = True
         self.is_up_wc()
 
     def finish(self):
         self.reset()
 
     def find_target(self):
-        self.step_drive.move_continuous(AccelerationMode.MODE_START)
-        event_args = ControllerEvent.event_args_improc_start
-        event = ControllerEvent(event_args)
-        self.notify_controller(event)
-        self.comm_object.update_state("START IMPROC")
+        move_start = False
         while not self.input_target_found:
-            time.sleep(0.02)
-        self.comm_object.update_state("TARGET AREA FOUND")
+            if not move_start:
+                move_start = True
+                event_args = ControllerEvent.event_args_improc_start
+                event = ControllerEvent(event_args)
+                self.notify_controller(event)
+                self.comm_object.update_state("START IMPROC")
+                self.step_drive.move_continuous(AccelerationMode.MODE_START)
+            time.sleep(0.5)
         self.step_drive.request_stop()
+        self.comm_object.update_state("TARGET AREA FOUND")
         time.sleep(0.5)
         distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.CENTER_ROLL_TO_CAMERA]
         acc_mode = AccelerationMode.determine_acc_mode(Locator.x)
-        self.step_drive.move_distance(distance, acc_mode, self.step_drive_callback)
-        while self.step_drive_wait:
-            time.sleep(0.02)
-        time.sleep(0.5)
-        self.step_drive_wait = True
+        self.step_drive.move_distance(distance, acc_mode, None)
+        # while self.step_drive_wait:
+        #     time.sleep(0.02)
+        # time.sleep(0.5)
+        # self.step_drive_wait = True
         self.step_drive.request_stop()
         self.target_area_found()
         self.go_down_wc()
@@ -357,8 +356,8 @@ class StateMachine:
     #     elif data == CommunicatorEvent.event_args_stop:
     #         self.input_main_stop = True
 
-    def step_drive_callback(self):
-        self.step_drive_wait = False
-
-    def step_stroke_callback(self):
-        self.step_stroke_wait = False
+    # def step_drive_callback(self):
+    #     self.step_drive_wait = False
+    #
+    # def step_stroke_callback(self):
+    #     self.step_stroke_wait = False

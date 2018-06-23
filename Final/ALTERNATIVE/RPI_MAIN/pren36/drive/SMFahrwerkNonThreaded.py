@@ -1,12 +1,11 @@
 import math
-import time
-from threading import Thread
 from time import sleep
+
 import RPi.GPIO as GPIO
 import numpy as np
 
-from pren36.lookup.Locator import Locator
 from pren36.drive.AccelerationMode import AccelerationMode
+from pren36.lookup.Locator import Locator
 
 
 class SMFahrwerk:
@@ -71,8 +70,8 @@ class SMFahrwerk:
         GPIO.setup(SMFahrwerk.DIR, GPIO.OUT)
         GPIO.setup(SMFahrwerk.STEP, GPIO.OUT)
         self.set_direction(direction)
-        t_async = Thread(target=self.move_async, name="SMFahrwerk")
-        t_async.start()
+        # t_async = Thread(target=self.move_async, name="SMFahrwerk")
+        # t_async.start()
 
     # def set_state(self, state):
     #     self.current_state = state
@@ -180,7 +179,10 @@ class SMFahrwerk:
             self.calc_steps(distance_mm)
             self.set_acc_mode(acc_mode[1])
             # self.set_state(SMFahrwerk.STATE_ACC)
-            self.move_async_idle = False
+            # self.move_async_idle = False
+            self.move_proc()
+            if self.callback is not None:
+                self.callback()
 
     def move_continuous(self, acc_mode):
         if not self.moving:
@@ -188,7 +190,10 @@ class SMFahrwerk:
             self.calc_steps(-1)
             self.set_acc_mode(acc_mode[1])
             # self.set_state(SMFahrwerk.STATE_ACC)
-            self.move_async_idle = False
+            # self.move_async_idle = False
+            self.move_proc()
+            if self.callback is not None:
+                self.callback()
 
     def move_proc(self):
         self.moving = True
@@ -217,14 +222,14 @@ class SMFahrwerk:
     def request_stop(self):
         self.stop_req = True
 
-    def move_async(self):
-        while True:
-            while self.move_async_idle:
-                time.sleep(0.02)
-            self.move_proc()
-            if self.callback is not None:
-                self.callback()
-            self.move_async_idle = True
+    # def move_async(self):
+    #     while True:
+    #         while self.move_async_idle:
+    #             time.sleep(0.02)
+    #         self.move_proc()
+    #         if self.callback is not None:
+    #             self.callback()
+    #         self.move_async_idle = True
 
     def deccelerate_end(self, delay):
         SMFahrwerk.RPM = SMFahrwerk.RPM_END

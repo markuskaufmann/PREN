@@ -13,7 +13,7 @@ class ImageProcessorPiCamera:
     FRAMERATE = 32
     IMAGESIZE_X = 640
     IMAGESIZE_Y = 480
-    TARGETRANGE = 15
+    TARGETRANGE = 10
     TARGETOFFSET = 0
 
     proc_conn = None
@@ -69,7 +69,7 @@ class ImageProcessorPiCamera:
     def wait(self):
         while self.wait_running:
             controllerevent = self.proc_conn.recv()
-            args = controllerevent.args
+            args = int(controllerevent.args)
             if args == ControllerEvent.event_args_improc_start:
                 if not self.is_running:
                     self.run()
@@ -78,8 +78,10 @@ class ImageProcessorPiCamera:
                     self.stop()
 
     def start_capture(self):
+        print("start capture")
         pvs = PiVideoStream(resolution=(ImageProcessorPiCamera.IMAGESIZE_X, ImageProcessorPiCamera.IMAGESIZE_Y),
-                            framerate=ImageProcessorPiCamera.FRAMERATE).start()
+                            framerate=ImageProcessorPiCamera.FRAMERATE)
+        pvs.start()
         time.sleep(1)
         while not self.stopped:
             image = pvs.read()

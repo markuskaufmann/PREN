@@ -1,13 +1,11 @@
-import time
+from multiprocessing import Process, Pipe
 from queue import Queue
 from threading import Thread
-from multiprocessing import Process, Pipe
-from pren36.improc.ImageProcessorPiCamera import ImageProcessorPiCamera
-from pren36.improc.ImageProcessorEvent import ImageProcessorEvent
-from pren36.sensor.TOFSensor import TOFSensor
-from pren36.sensor.UltrasoundSensor import UltraSoundSensor
-from pren36.serial.IOListener import IOListener
+
 from pren36.controller.ControllerEvent import ControllerEvent
+from pren36.improc.ImageProcessorEvent import ImageProcessorEvent
+from pren36.improc.ImageProcessorPiCamera import ImageProcessorPiCamera
+from pren36.serial.IOListener import IOListener
 
 
 class Controller:
@@ -28,8 +26,8 @@ class Controller:
     imageprocessor = ImageProcessorPiCamera()
     rec_queue = Queue()
     iolistener = IOListener(rec_queue)
-    ultrasonic = UltraSoundSensor()
-    tof = TOFSensor()
+    # ultrasonic = UltraSoundSensor()
+    # tof = TOFSensor()
 
     def start(self):
         self.iolistener.start_idle()
@@ -40,14 +38,10 @@ class Controller:
         self.t_improc.start()
         self.t_io = Thread(target=self.io_wait, name=self.thread_prefix + "IOListener")
         self.t_io.start()
-        self.t_us = Thread(target=self.control_ultrasonic, name=self.thread_prefix + "LocX")
-        self.t_us.start()
-        self.t_tof = Thread(target=self.control_tof, name=self.thread_prefix + "LocZ")
-        self.t_tof.start()
-
-    def notify_observers(self, connections, event):
-        for connection in connections:
-            connection.send(event)
+        # self.t_us = Thread(target=self.control_ultrasonic, name=self.thread_prefix + "LocX")
+        # self.t_us.start()
+        # self.t_tof = Thread(target=self.control_tof, name=self.thread_prefix + "LocZ")
+        # self.t_tof.start()
 
     def improc_wait(self):
         while self.t_improc_running:
@@ -62,27 +56,26 @@ class Controller:
     def io_wait(self):
         while self.t_io_running:
             data = self.rec_queue.get()
-            connections = []
             data = str(data).strip()
             if len(data) == 0:
                 continue
             if data == str(ControllerEvent.event_args_improc_start) or data == str(ControllerEvent.event_args_main_stop):
+                print(data)
                 event = ControllerEvent(data)
-                connections.append(self.conn_improc_parent)
-                self.notify_observers(connections, event)
+                self.conn_improc_parent.send(event)
 
-    def control_ultrasonic(self):
-        while self.t_us_running:
-            while not self.t_us_control:
-                time.sleep(0.02)
-            while self.t_us_control:
-                print(self.ultrasonic.distance())
-                time.sleep(1)
-
-    def control_tof(self):
-        while self.t_tof_running:
-            while not self.t_tof_control:
-                time.sleep(0.02)
-            while self.t_tof_control:
-                print(self.tof.distance())
-                time.sleep(1)
+    # def control_ultrasonic(self):
+    #     while self.t_us_running:
+    #         while not self.t_us_control:
+    #             time.sleep(0.02)
+    #         while self.t_us_control:
+    #             print(self.ultrasonic.distance())
+    #             time.sleep(1)
+    #
+    # def control_tof(self):
+    #     while self.t_tof_running:
+    #         while not self.t_tof_control:
+    #             time.sleep(0.02)
+    #         while self.t_tof_control:
+    #             print(self.tof.distance())
+    #             time.sleep(1)
