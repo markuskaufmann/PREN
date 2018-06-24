@@ -108,7 +108,7 @@ class ImageProcessorPiCamera:
 
             if not c_x == -1:
                 print("Target found at: " + str(c_x) + "," + str(c_y))
-                if self.check_x(c_x):
+                if self.check_y(c_y):
                     print("Drop location: " + str(c_x) + "," + str(c_y))
                     self.send_event()
                     self.stop()
@@ -128,6 +128,17 @@ class ImageProcessorPiCamera:
         lower = ImageProcessorPiCamera.IMAGESIZE_X / 2 - ImageProcessorPiCamera.TARGETRANGE + \
                 ImageProcessorPiCamera.TARGETOFFSET
         if lower <= loc_x <= upper:
+            return True
+        else:
+            return False
+
+    @staticmethod
+    def check_y(loc_y) -> bool:
+        upper = ImageProcessorPiCamera.IMAGESIZE_Y / 2 + ImageProcessorPiCamera.TARGETRANGE + \
+                ImageProcessorPiCamera.TARGETOFFSET
+        lower = ImageProcessorPiCamera.IMAGESIZE_Y / 2 - ImageProcessorPiCamera.TARGETRANGE + \
+                ImageProcessorPiCamera.TARGETOFFSET
+        if lower <= loc_y <= upper:
             return True
         else:
             return False
