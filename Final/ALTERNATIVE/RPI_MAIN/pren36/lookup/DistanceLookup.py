@@ -11,6 +11,7 @@ class DistanceLookup:
     START_HEIGHT_ABOVE_GROUND = "start_height_above_ground"
     START_HEIGHT_CUBE = "start_height_cube"
     HEIGHT_WITH_CUBE_ABOVE_GROUND = "height_with_cube_above_ground"
+    HEIGHT_CONS_TO_CUBE = "height_cons_to_cube"
     LENGTH_START_TO_TARGET_RANGE = "length_start_to_target_range"
     LENGTH_TARGET_RANGE = "length_target_range"
     LENGTH_TARGET_RANGE_TO_END = "length_target_range_to_end"
@@ -33,10 +34,11 @@ class DistanceLookup:
         HEIGHT_END: 1100,
         WIDTH_START_AREA: 500,
         LENGTH_START_AREA: 500,
-        START_TO_CENTER_ROLL: 165,
-        START_TO_CUBE: 500,
-        START_HEIGHT_ABOVE_GROUND: 210,
-        START_HEIGHT_CUBE: 160,
+        START_TO_CENTER_ROLL: 175,
+        START_TO_CUBE: 480,
+        START_HEIGHT_ABOVE_GROUND: 200,
+        START_HEIGHT_CUBE: 145,
+        HEIGHT_CONS_TO_CUBE: 220,
         HEIGHT_WITH_CUBE_ABOVE_GROUND: 255,
         LENGTH_START_TO_TARGET_RANGE: 800,
         LENGTH_TARGET_RANGE: 2400,
@@ -49,16 +51,18 @@ class DistanceLookup:
         LENGTH_TOTAL_WO_MAST: 3400,
         HEIGHT_OBSTACLES: 200,
         ANGLE_PITCH_DEGREES: 8.13,
-        CENTER_ROLL_TO_CAMERA: 140,
+        CENTER_ROLL_TO_CAMERA: 110,
         CUBE_START_X: 650,
         CUBE_START_Z: 0,
         THRESHOLD_SLOW_END: 3200
     }
 
     HEIGHT_DELTA = {}
+    X_MAP = {}
 
     @staticmethod
     def init_dict():
+        # HEIGHT_DELTA
         for i in range(0, 541, 1):
             DistanceLookup.HEIGHT_DELTA[i] = (30, math.sin(math.radians(4.989)), math.cos(math.radians(4.989)))
         for i in range(541, 641, 1):
@@ -106,7 +110,64 @@ class DistanceLookup:
         for i in range(2641, 3541, 1):
             DistanceLookup.HEIGHT_DELTA[i] = (0, math.sin(math.radians(8.13)), math.cos(math.radians(8.13)))
 
-    @staticmethod
-    def get_delta(x):
-        x = math.floor(x)
-        return DistanceLookup.HEIGHT_DELTA[x][0]
+        # X_MAP
+        for i in range(0, 160, 1):
+            DistanceLookup.X_MAP[i] = (0, 1)
+        for i in range(160, 260, 1):
+            DistanceLookup.X_MAP[i] = (20, 1.076923077)
+        for i in range(260, 360, 1):
+            DistanceLookup.X_MAP[i] = (24, 1.066666667)
+        for i in range(360, 460, 1):
+            DistanceLookup.X_MAP[i] = (29, 1.063043478)
+        for i in range(460, 560, 1):
+            DistanceLookup.X_MAP[i] = (25, 1.044642857)
+        for i in range(560, 660, 1):
+            DistanceLookup.X_MAP[i] = (26, 1.039393939)
+        for i in range(660, 760, 1):
+            DistanceLookup.X_MAP[i] = (40, 1.052631579)
+        for i in range(760, 860, 1):
+            DistanceLookup.X_MAP[i] = (60, 1.069767442)
+        for i in range(860, 960, 1):
+            DistanceLookup.X_MAP[i] = (63, 1.065625)
+        for i in range(960, 1060, 1):
+            DistanceLookup.X_MAP[i] = (68, 1.064150943)
+        for i in range(1060, 1160, 1):
+            DistanceLookup.X_MAP[i] = (68, 1.05862069)
+        for i in range(1160, 1260, 1):
+            DistanceLookup.X_MAP[i] = (70, 1.055555556)
+        for i in range(1260, 1360, 1):
+            DistanceLookup.X_MAP[i] = (68, 1.05)
+        for i in range(1360, 1460, 1):
+            DistanceLookup.X_MAP[i] = (80, 1.054794521)
+        for i in range(1460, 1560, 1):
+            DistanceLookup.X_MAP[i] = (85, 1.054487179)
+        for i in range(1560, 1660, 1):
+            DistanceLookup.X_MAP[i] = (80, 1.048192771)
+        for i in range(1660, 1760, 1):
+            DistanceLookup.X_MAP[i] = (94, 1.053409091)
+        for i in range(1760, 1860, 1):
+            DistanceLookup.X_MAP[i] = (102, 1.05483871)
+        for i in range(1860, 1960, 1):
+            DistanceLookup.X_MAP[i] = (130, 1.066326531)
+        for i in range(1960, 2060, 1):
+            DistanceLookup.X_MAP[i] = (135, 1.065533981)
+        for i in range(2060, 2160, 1):
+            DistanceLookup.X_MAP[i] = (141, 1.065277778)
+        for i in range(2160, 2260, 1):
+            DistanceLookup.X_MAP[i] = (160, 1.07079646)
+        for i in range(2260, 2360, 1):
+            DistanceLookup.X_MAP[i] = (165, 1.069915254)
+        for i in range(2360, 2460, 1):
+            DistanceLookup.X_MAP[i] = (172, 1.069918699)
+        for i in range(2460, 2560, 1):
+            DistanceLookup.X_MAP[i] = (176, 1.06875)
+        for i in range(2560, 2660, 1):
+            DistanceLookup.X_MAP[i] = (180, 1.067669173)
+        for i in range(2660, 2760, 1):
+            DistanceLookup.X_MAP[i] = (190, 1.06884058)
+        for i in range(2760, 2860, 1):
+            DistanceLookup.X_MAP[i] = (196, 1.068531469)
+        for i in range(2860, 2960, 1):
+            DistanceLookup.X_MAP[i] = (202, 1.068243243)
+        for i in range(2960, 3161, 1):
+            DistanceLookup.X_MAP[i] = (200, 1.065359477)

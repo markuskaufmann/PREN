@@ -23,7 +23,7 @@ class SMHub:
     DIA = 15  # [mm]
     DIA_MOD = DIA / DIA_MOTOR
     PER = DIA_MOTOR * np.pi  # [mm]
-    DPS = (PER / SPR) * DIA_MOD
+    DPS = (PER / SPR) # * DIA_MOD
 
     STATES = {
         'stop': 0,

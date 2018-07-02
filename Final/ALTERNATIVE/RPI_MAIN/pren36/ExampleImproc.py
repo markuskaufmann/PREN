@@ -42,19 +42,20 @@ class ExampleImproc:
                 self.comm_object.update_state("START IMPROC")
                 self.step_drive.move_continuous(AccelerationMode.MODE_START)
             time.sleep(0.5)
-        self.step_drive.request_stop()
+        print("exit loop")
+        # self.step_drive.request_stop()
         self.comm_object.update_state("TARGET AREA FOUND")
-        time.sleep(0.5)
-        distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.CENTER_ROLL_TO_CAMERA]
-        acc_mode = AccelerationMode.determine_acc_mode(Locator.x)
-        self.step_drive.move_distance(distance, acc_mode, None)
-        self.drive_to_ground_wc()
+        print("END")
+        # distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.CENTER_ROLL_TO_CAMERA]
+        # acc_mode = AccelerationMode.determine_acc_mode(Locator.x)
+        # self.step_drive.move_distance(distance, acc_mode, None)
+        # self.drive_to_ground_wc()
 
-    def drive_to_ground_wc(self):
-        self.comm_object.update_state("SET CUBE")
-        distance = Locator.z - DistanceLookup.get_delta(Locator.x) - \
-                   DistanceLookup.DISTANCE_MAP[DistanceLookup.HEIGHT_TARGET_AREA] - 20
-        self.step_stroke.move_distance(distance, SMHub.CCW, None)
+    # def drive_to_ground_wc(self):
+    #     self.comm_object.update_state("SET CUBE")
+    #     distance = Locator.z - DistanceLookup.get_delta(Locator.x) - \
+    #                DistanceLookup.DISTANCE_MAP[DistanceLookup.HEIGHT_TARGET_AREA] - 20
+    #     self.step_stroke.move_distance(distance, SMHub.CCW, None)
 
     def wait(self):
         while self.t_io_wait:
@@ -65,6 +66,7 @@ class ExampleImproc:
             if data == str(ControllerEvent.event_args_improc_target_found):
                 print("target found")
                 self.input_target_found = True
+                self.step_drive.request_stop()
 
 
 if __name__ == '__main__':

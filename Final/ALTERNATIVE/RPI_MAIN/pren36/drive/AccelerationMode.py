@@ -2,9 +2,9 @@
 class AccelerationMode:
     # end_position [mm], acc_factor
     ACC_MODES = {
-        "am_start": (1500, 1.01),
-        "am_intermediate": (2000, 1.005),
-        "am_end": (3000, 1.0025)
+        "am_start": (1450, 1.01),
+        "am_intermediate": (1950, 1.0095),
+        "am_end": (4000, 1.001)
     }
     MODE_START = ACC_MODES["am_start"]
     MODE_INTERMEDIATE = ACC_MODES["am_intermediate"]

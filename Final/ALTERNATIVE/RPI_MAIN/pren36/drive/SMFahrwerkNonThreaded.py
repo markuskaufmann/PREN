@@ -25,7 +25,7 @@ class SMFahrwerk:
     DIA = 82  # [mm]
     DIA_MOD = DIA / DIA_MOTOR
     PER = DIA_MOTOR * np.pi  # [mm]
-    DPS = (PER / SPR) * DIA_MOD
+    DPS = (PER / SPR) * (DIA_MOD / 2.3)
 
     STATES = {
         'stop': 0,
@@ -131,7 +131,7 @@ class SMFahrwerk:
         print("accelerate")
         while delay > self.delay_drive and steps != 0:
             if self.stop_req:
-                return
+                break
             GPIO.output(SMFahrwerk.STEP, GPIO.HIGH)
             sleep(delay)
             GPIO.output(SMFahrwerk.STEP, GPIO.LOW)
@@ -145,7 +145,7 @@ class SMFahrwerk:
         print("stop")
         while delay < self.delay and steps != 0:
             if self.stop_req:
-                return
+                break
             GPIO.output(SMFahrwerk.STEP, GPIO.HIGH)
             sleep(delay)
             GPIO.output(SMFahrwerk.STEP, GPIO.LOW)
@@ -160,9 +160,10 @@ class SMFahrwerk:
         steps = 0
         while steps < step_count or step_count == -1:
             if self.stop_req:
-                return
+                print("STOP")
+                break
             if self.slow_end:
-                return
+                break
             GPIO.output(SMFahrwerk.STEP, GPIO.HIGH)
             sleep(delay)
             GPIO.output(SMFahrwerk.STEP, GPIO.LOW)

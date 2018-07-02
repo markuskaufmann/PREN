@@ -18,13 +18,12 @@ class Launcher:
         while self.idle:
             time.sleep(0.02)
         try:
-            self.grabber.initialize(0)
             if self.direction == 0:
                 self.grabber.open()
             else:
                 self.grabber.close()
         except KeyboardInterrupt:
-            self.grabber.stop()
+            # self.grabber.stop()
             sys.exit()
 
     def run(self):

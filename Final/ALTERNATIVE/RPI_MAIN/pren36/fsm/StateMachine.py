@@ -252,10 +252,11 @@ class StateMachine:
         self.drive_to_ground(distance)
 
     def drive_to_ground_wc(self):
-        self.comm_object.update_state("SET CUBE")
-        distance = Locator.z - DistanceLookup.get_delta(Locator.x) - \
-                   DistanceLookup.DISTANCE_MAP[DistanceLookup.HEIGHT_TARGET_AREA] - 20
-        self.drive_to_ground(distance)
+        # self.comm_object.update_state("SET CUBE")
+        # distance = Locator.z - DistanceLookup.get_delta(Locator.x) - \
+        #            DistanceLookup.DISTANCE_MAP[DistanceLookup.HEIGHT_TARGET_AREA] - 20
+        # self.drive_to_ground(distance)
+        pass
 
     def drive_to_ground(self, distance_mm):
         self.step_stroke.move_distance(distance_mm, SMHub.CCW, self.step_stroke_callback)

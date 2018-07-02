@@ -33,6 +33,7 @@ class Launcher:
                 time.sleep(0.02)
             time.sleep(1)
             self.step_drive_wait = True
+            print("width: " + str(Locator.x))
             print("height: " + str(Locator.z))
         except KeyboardInterrupt:
             self.step_drive.request_stop()

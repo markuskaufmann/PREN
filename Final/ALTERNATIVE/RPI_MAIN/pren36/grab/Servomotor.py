@@ -12,8 +12,8 @@ class Servomotor:
 
     # dc_1 = 9.5
     # dc_2 = 5.5
-    dc_1 = 5.5
-    dc_2 = 10.5
+    dc_1 = 6.5
+    dc_2 = 12
     dc_sleep = 2
 
     def initialize(self, dc):
@@ -27,14 +27,20 @@ class Servomotor:
         # Servomotor.p.ChangeDutyCycle(0)
 
     def open(self):
-        Servomotor.p.ChangeDutyCycle(Servomotor.dc_1)
-        time.sleep(1)
+        # Servomotor.p.ChangeDutyCycle(Servomotor.dc_1)
+        # time.sleep(1)
         # Servomotor.p.ChangeDutyCycle(0)
+        Servomotor.p.start(Servomotor.dc_1)
+        time.sleep(0.5)
+        self.stop()
 
     def close(self):
-        Servomotor.p.ChangeDutyCycle(Servomotor.dc_2)
-        time.sleep(1)
+        # Servomotor.p.ChangeDutyCycle(Servomotor.dc_2)
+        # time.sleep(1)
         # Servomotor.p.ChangeDutyCycle(0)
+        Servomotor.p.start(Servomotor.dc_2)
+        time.sleep(0.5)
+        self.stop()
 
     def stop(self):
         # self.reset()

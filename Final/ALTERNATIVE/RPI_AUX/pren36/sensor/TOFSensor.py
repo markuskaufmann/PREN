@@ -38,7 +38,7 @@ class TOFSensor:
     def distance(self):
         distance = self.tof.get_distance()
         time.sleep(self.timing / 1000000.00)
-        return distance / 10
+        return distance
 
     def stop(self):
         self.tof.stop_ranging()

@@ -3,8 +3,8 @@ import time
 
 
 class UltraSoundSensor:
-    GPIO_TRIGGER = 23
-    GPIO_ECHO = 18
+    GPIO_TRIGGER = 22
+    GPIO_ECHO = 17
 
     GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BCM)

@@ -13,7 +13,7 @@ class SMHub:
     STEP = 21  # Step GPIO Pin BLUE
     CW = 1  # Clockwise Rotation UP
     CCW = 0  # Counterclockwise Rotation DOWN
-    RPM = 120
+    RPM = 80
     RPS = RPM / 60
     SPR = 200
     STEP_MOD = 2  # 1/2 Step
@@ -23,7 +23,7 @@ class SMHub:
     DIA = 15  # [mm]
     DIA_MOD = DIA / DIA_MOTOR
     PER = DIA_MOTOR * np.pi  # [mm]
-    DPS = (PER / SPR) * DIA_MOD
+    DPS = (PER / SPR) * (DIA_MOD / 2.3)
 
     STATES = {
         'stop': 0,
@@ -123,7 +123,7 @@ class SMHub:
         print("accelerate")
         while delay > self.delay_drive and steps != 0:
             if self.stop_req:
-                return
+                break
             GPIO.output(SMHub.STEP, GPIO.HIGH)
             sleep(delay)
             GPIO.output(SMHub.STEP, GPIO.LOW)
@@ -137,7 +137,7 @@ class SMHub:
         print("stop")
         while delay < self.delay and steps != 0:
             if self.stop_req:
-                return
+                break
             GPIO.output(SMHub.STEP, GPIO.HIGH)
             sleep(delay)
             GPIO.output(SMHub.STEP, GPIO.LOW)
@@ -152,7 +152,7 @@ class SMHub:
         steps = 0
         while steps < step_count or step_count == -1:
             if self.stop_req:
-                return
+                break
             GPIO.output(SMHub.STEP, GPIO.HIGH)
             sleep(delay)
             GPIO.output(SMHub.STEP, GPIO.LOW)

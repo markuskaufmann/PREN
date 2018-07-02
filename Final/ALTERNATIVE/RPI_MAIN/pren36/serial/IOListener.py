@@ -1,6 +1,6 @@
 import time
 from queue import Queue
-from threading import Thread
+from threading import Thread, Lock
 
 from pren36.serial.SerialConnection import SerialConnection
 
@@ -12,6 +12,7 @@ class IOListener:
     t_write_running = True
     t_read = None
     t_read_running = True
+    lock = Lock()
 
     def __init__(self, fsm_queue):
         self.fsm_queue = fsm_queue
@@ -24,7 +25,8 @@ class IOListener:
         self.t_read.start()
 
     def send_data_to_output(self, event):
-        self.serial_conn.write(event.args)
+        with self.lock:
+            self.serial_conn.write(event.args)
 
     def read(self):
         while self.t_read_running:

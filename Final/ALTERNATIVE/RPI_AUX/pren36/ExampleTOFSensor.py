@@ -1,0 +1,35 @@
+import time
+from threading import Thread
+from pren36.sensor.TOFSensor import TOFSensor
+
+
+class ControllerTOFSensor:
+    idle = True
+    running = False
+    t_running = None
+    ts = None
+
+    def __init__(self):
+        self.ts = TOFSensor()
+        self.t_running = Thread(target=self.start_idle)
+        self.t_running.start()
+
+    def start_idle(self):
+        while self.idle:
+            time.sleep(0.02)
+        try:
+            while self.running:
+                print("distance(z) = %.2f cm" % self.ts.distance())
+                time.sleep(0.5)
+        except KeyboardInterrupt:
+            self.ts.stop()
+            return
+
+    def run(self):
+        self.running = True
+        self.idle = False
+
+
+if __name__ == '__main__':
+    cts = ControllerTOFSensor()
+    cts.run()

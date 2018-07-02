@@ -13,7 +13,7 @@ class ImageProcessorPiCamera:
     FRAMERATE = 32
     IMAGESIZE_X = 640
     IMAGESIZE_Y = 480
-    TARGETRANGE = 10
+    TARGETRANGE = 20
     TARGETOFFSET = 0
 
     proc_conn = None

@@ -18,8 +18,7 @@ from pren36.serial.IOListener import IOListener
 
 class StateMachine:
     initialized = False
-    dist_x = 0
-    dist_z = 0
+    current_state = None
 
     # controller
     rec_queue = Queue()
@@ -28,31 +27,25 @@ class StateMachine:
     t_io_wait = True
     t_stop = None
 
-    # communicator
-    comm_object = None
-    proc_comm = None
-
     # signals
+    input_start = False
+    input_stop = False
     input_target_found = False
+    height_response = 0
 
     # engines
     step_stroke = None
-    t_step_stroke = None
     step_drive = None
-    t_step_drive = None
-    step_drive_wait = True
-    step_stroke_wait = True
     servo_grab = None
-    t_servo_grab = None
-    servo_run = True
-    servo_wait = True
-    servo_open = False
-    servo_close = False
 
     # sensors
     end_switch = None
     t_end_switch = None
     end_switch_wait = True
+
+    # location
+    t_loc = None
+    t_location = False
 
     # states
     # states = [
@@ -116,13 +109,6 @@ class StateMachine:
             # DistanceLookup
             DistanceLookup.init_dict()
 
-            # communicator
-            self.comm_object = CommObject()
-            Locator.comm_object = self.comm_object
-            self.proc_comm = Process(target=communicator.run, name="FSM_Communicator",
-                                     args=(self.comm_object,))
-            self.proc_comm.start()
-
             # controller
             self.t_io = Thread(target=self.wait, name="FSM_IOListener_Wait")
             self.t_io.start()
@@ -138,14 +124,23 @@ class StateMachine:
             self.end_switch = EndSwitch()
             self.t_end_switch = Thread(target=self.end_switch_control)
 
+            # location
+            self.t_loc = Thread(target=self.location)
+            self.t_loc.start()
+
         # signals
+        self.input_start = False
+        self.input_stop = False
         self.input_target_found = False
-        self.comm_object.reset()
+        self.height_response = 0
 
         Locator.reset()
 
-        self.comm_object.update_state("READY")
+        self.update_state("READY")
         self.receive_start_signal()
+
+    def update_state(self, new_state):
+        self.current_state = new_state
 
     def end_switch_control(self):
         while True:
@@ -155,28 +150,31 @@ class StateMachine:
                 signal = self.end_switch.signal()
                 if signal == 1:
                     self.end_switch_wait = True
-                    self.comm_object.update_state("RESPONSE_PROCESS STOPPED")
+                    self.update_state("RESPONSE_PROCESS STOPPED")
                     self.smd_stop_driving()
                     self.sms_stop_driving()
+                    time.sleep(0.5)
+                    self.t_location = False
+                    self.notify_controller(ControllerEvent(ControllerEvent.event_args_main_finish))
                     self.finish()
                 time.sleep(0.05)
 
     def receive_start_signal(self):
-        while not self.comm_object.is_started():
+        while not self.input_start:
             time.sleep(0.02)
-        self.comm_object.update_state("RESPONSE_PROCESS STARTED")
+        time.sleep(1)
+        self.update_state("RESPONSE_PROCESS STARTED")
         self.receive_cube()
 
     def receive_stop_signal(self):
         while True:
-            while not self.comm_object.is_stopped():
+            while not self.input_stop:
                 time.sleep(0.1)
-            event_args = ControllerEvent.event_args_main_stop
-            event = ControllerEvent(event_args)
-            self.notify_controller(event)
-            self.comm_object.update_state("RESPONSE_PROCESS STOPPED")
+            self.update_state("RESPONSE_PROCESS STOPPED")
             self.smd_stop_driving()
             self.sms_stop_driving()
+            time.sleep(0.5)
+            self.t_location = False
             self.finish()
 
     def smd_stop_driving(self):
@@ -186,7 +184,7 @@ class StateMachine:
         self.step_stroke.request_stop()
 
     def receive_cube(self):
-        self.comm_object.update_state("GET CUBE")
+        self.update_state("GET CUBE")
         distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.START_TO_CUBE]
         self.step_drive.move_distance(distance, AccelerationMode.MODE_START, None)
         self.smd_stop_driving()
@@ -194,28 +192,30 @@ class StateMachine:
         self.open_grabber_woc()
 
     def open_grabber(self):
-        self.servo_grab.initialize(0)
+        # self.servo_grab.initialize(0)
         self.servo_grab.open()
-        self.servo_grab.stop()
+        # self.servo_grab.stop()
 
     def close_grabber(self):
-        self.servo_grab.initialize(0)
+        # self.servo_grab.initialize(0)
         self.servo_grab.close()
-        self.servo_grab.stop()
+        # self.servo_grab.stop()
 
     def open_grabber_woc(self):
-        self.open_grabber()
+        # self.open_grabber()
         self.drive_to_ground_woc()
 
     def close_grabber_wc(self):
         self.close_grabber()
-        self.comm_object.update_state("CUBE RECEIVED")
+        self.update_state("CUBE RECEIVED")
         self.start_location()
         self.drive_up_wc()
 
     def place_cube(self):
+        time.sleep(1)
+        Locator.zc = 15
         self.open_grabber()
-        self.comm_object.update_state("CUBE PLACED")
+        self.update_state("CUBE PLACED")
         self.stop_location()
         self.drive_up_woc()
 
@@ -225,9 +225,11 @@ class StateMachine:
         self.on_the_ground_woc()
 
     def drive_to_ground_wc(self):
-        self.comm_object.update_state("SET CUBE")
-        distance = Locator.z - DistanceLookup.get_delta(Locator.x) - \
-                   DistanceLookup.DISTANCE_MAP[DistanceLookup.HEIGHT_TARGET_AREA] - 20
+        self.update_state("SET CUBE")
+        while self.height_response == 0:
+            time.sleep(0.05)
+        distance = self.height_response - DistanceLookup.DISTANCE_MAP[DistanceLookup.HEIGHT_TARGET_AREA] - \
+                    DistanceLookup.DISTANCE_MAP[DistanceLookup.HEIGHT_CONS_TO_CUBE] - 10
         self.step_stroke.move_distance(distance, SMHub.CCW, None)
         self.on_the_ground_wc()
 
@@ -268,17 +270,17 @@ class StateMachine:
                 event_args = ControllerEvent.event_args_improc_start
                 event = ControllerEvent(event_args)
                 self.notify_controller(event)
-                self.comm_object.update_state("START IMPROC")
+                self.update_state("START IMPROC")
                 self.step_drive.move_continuous(AccelerationMode.MODE_START)
             time.sleep(0.5)
-        self.step_drive.request_stop()
-        self.comm_object.update_state("TARGET AREA FOUND")
-        time.sleep(0.5)
-        distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.CENTER_ROLL_TO_CAMERA]
-        acc_mode = AccelerationMode.determine_acc_mode(Locator.x)
-        self.step_drive.move_distance(distance, acc_mode, None)
+        self.update_state("TARGET AREA FOUND")
+        # distance = DistanceLookup.DISTANCE_MAP[DistanceLookup.CENTER_ROLL_TO_CAMERA]
+        # acc_mode = AccelerationMode.determine_acc_mode(Locator.x)
+        # self.step_drive.move_distance(distance, acc_mode, None)
         self.smd_stop_driving()
         self.sms_stop_driving()
+        event = ControllerEvent(ControllerEvent.event_args_req_height)
+        self.notify_controller(event)
         self.adjust_target_location()
         self.drive_to_ground_wc()
 
@@ -304,5 +306,21 @@ class StateMachine:
             if len(data) == 0:
                 continue
             if data == str(ControllerEvent.event_args_improc_target_found):
-                print("target found")
                 self.input_target_found = True
+                time.sleep(0.55)
+                self.smd_stop_driving()
+            elif data == str(ControllerEvent.event_args_main_start):
+                self.input_start = True
+                self.t_location = True
+            elif data == str(ControllerEvent.event_args_main_stop):
+                self.input_stop = True
+                self.t_location = False
+            else:
+                self.height_response = float(data)
+
+    def location(self):
+        while True:
+            if self.t_location:
+                event = ControllerEvent(self.current_state + ";" + Locator.loc_cube())
+                self.notify_controller(event)
+            time.sleep(0.5)
