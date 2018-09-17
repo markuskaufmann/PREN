@@ -157,19 +157,19 @@ class StateMachine:
                     self.t_location = False
                     self.notify_controller(ControllerEvent(ControllerEvent.event_args_main_finish))
                     self.finish()
-                time.sleep(0.05)
+                time.sleep(0.2)
 
     def receive_start_signal(self):
         while not self.input_start:
             time.sleep(0.02)
-        time.sleep(1)
+        # time.sleep(1)
         self.update_state("RESPONSE_PROCESS STARTED")
         self.receive_cube()
 
     def receive_stop_signal(self):
         while True:
             while not self.input_stop:
-                time.sleep(0.1)
+                time.sleep(0.2)
             self.update_state("RESPONSE_PROCESS STOPPED")
             self.smd_stop_driving()
             self.sms_stop_driving()
@@ -307,7 +307,7 @@ class StateMachine:
                 continue
             if data == str(ControllerEvent.event_args_improc_target_found):
                 self.input_target_found = True
-                time.sleep(0.55)
+                time.sleep(0.52)
                 self.smd_stop_driving()
             elif data == str(ControllerEvent.event_args_main_start):
                 self.input_start = True

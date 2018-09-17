@@ -13,7 +13,7 @@ class Servomotor:
     # dc_1 = 9.5
     # dc_2 = 5.5
     dc_1 = 6.5
-    dc_2 = 12
+    dc_2 = 13
     dc_sleep = 2
 
     def initialize(self, dc):

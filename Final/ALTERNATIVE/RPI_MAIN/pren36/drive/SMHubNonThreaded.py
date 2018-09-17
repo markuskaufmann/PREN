@@ -120,7 +120,6 @@ class SMHub:
             print("steps drive: %d" % self.steps_drive)
 
     def accelerate(self, delay, steps):
-        print("accelerate")
         while delay > self.delay_drive and steps != 0:
             if self.stop_req:
                 break
@@ -134,7 +133,6 @@ class SMHub:
         return delay
 
     def stop(self, delay, steps):
-        print("stop")
         while delay < self.delay and steps != 0:
             if self.stop_req:
                 break
@@ -148,7 +146,6 @@ class SMHub:
         return delay
 
     def drive(self, delay, step_count):
-        print("drive")
         steps = 0
         while steps < step_count or step_count == -1:
             if self.stop_req:
@@ -189,11 +186,11 @@ class SMHub:
         delay = self.accelerate(delay, self.steps_acc_stop)
         if self.stop_req:
             self.reset_flags()
-            return
+            return -1
         self.drive(delay, self.steps_drive)
         if self.stop_req:
             self.reset_flags()
-            return
+            return -1
         self.stop(delay, self.steps_acc_stop)
         self.reset_flags()
 

@@ -107,7 +107,7 @@ class DistanceLookup:
             DistanceLookup.HEIGHT_DELTA[i] = (20, math.sin(math.radians(7.687)), math.cos(math.radians(7.687)))
         for i in range(2541, 2641, 1):
             DistanceLookup.HEIGHT_DELTA[i] = (10, math.sin(math.radians(7.917)), math.cos(math.radians(7.917)))
-        for i in range(2641, 3541, 1):
+        for i in range(2641, 4541, 1):
             DistanceLookup.HEIGHT_DELTA[i] = (0, math.sin(math.radians(8.13)), math.cos(math.radians(8.13)))
 
         # X_MAP

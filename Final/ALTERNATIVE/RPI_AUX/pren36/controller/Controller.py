@@ -85,11 +85,11 @@ class Controller:
             while not self.comm_object.is_started():
                 time.sleep(0.5)
             if not self.start_sent:
-                self.comm_object.reset()
+                # self.comm_object.reset()
                 event = ControllerEvent(ControllerEvent.event_args_main_start)
                 self.iolistener.send_data_to_output(event)
                 self.start_sent = True
-                time.sleep(0.5)
+                # time.sleep(0.5)
                 # self.t_tof_send = True
             time.sleep(1)
 

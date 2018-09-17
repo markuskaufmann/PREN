@@ -35,12 +35,15 @@ class Locator:
         else:
             # Locator.z -= step_distance_mm
             if Locator.cube_loc:
-                Locator.zc -= step_distance_mm
+                if (Locator.zc - step_distance_mm) < 15:
+                    Locator.zc = 15
+                else:
+                    Locator.zc -= step_distance_mm
             # if Locator.z < 0:
             #     Locator.z = 0
             #     Locator.zc = 0
-            if Locator.zc < 0:
-                Locator.zc = 0
+            # if Locator.zc < 0:
+            #     Locator.zc = 0
 
     @staticmethod
     def real_distance_mm(x_distance_mm):

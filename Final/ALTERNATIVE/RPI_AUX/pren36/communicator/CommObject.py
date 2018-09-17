@@ -53,5 +53,5 @@ class CommObject(object):
         self.started.value = False
         self.stopped.value = False
         self.state.value = b''
-        self.x.value = 65
+        self.x.value = 650
         self.z.value = 0
